@@ -1,4 +1,4 @@
-package com.allan.response;
+package com.allan.request;
 
 import lombok.Data;
 

@@ -15,7 +15,7 @@ import com.allan.response.ApiResponse;
 //import com.allan.model.User;
 //import com.allan.repository.UserRepository;
 import com.allan.response.AuthResponse;
-import com.allan.response.SignupRequest;
+import com.allan.request.SignupRequest;
 import com.allan.service.AuthService;
 
 import lombok.RequiredArgsConstructor;

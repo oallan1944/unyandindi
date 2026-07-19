@@ -255,17 +255,17 @@ public ResponseEntity<List<OrderDTO>> getAllOrders(
     // COUPON MANAGEMENT
     // ═════════════════════════════════════════════════════════════
 
-    @GetMapping("/coupons")
-    public ResponseEntity<List<Coupon>> getAllCoupons() throws Exception {
-        return ResponseEntity.ok(adminService.getAllCoupons());
-    }
+//    @GetMapping("/coupons")
+//     public ResponseEntity<List<Coupon>> getAllCoupons() throws Exception {
+//         return ResponseEntity.ok(adminService.getAllCoupons());
+//     }
 
     @PostMapping("/coupons")
     public ResponseEntity<Coupon> createCoupon(@RequestBody Coupon coupon) throws Exception {
         Coupon created = adminService.createCoupon(coupon);
         log.info("Coupon created: {}", created.getCode());
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
-    }
+    } 
 
     @DeleteMapping("/coupons/{id}")
     public ResponseEntity<Void> deleteCoupon(@PathVariable Long id) throws Exception {

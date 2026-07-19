@@ -9,6 +9,8 @@ import org.springframework.data.repository.query.Param;
 import com.allan.domain.OrderStatus;
 import com.allan.model.Order;
 
+import java.util.Optional;
+
 public interface OrderRepository extends JpaRepository<Order, Long> {
 
     /**
@@ -53,6 +55,19 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             """)
     List<Order> findByOrderStatus(@Param("status") OrderStatus status);
 
+
+        long countByUserIdAndOrderStatus(Long userId, OrderStatus orderStatus);
+
+        @Query("""
+                SELECT COALESCE(SUM(o.totalSellingPrice), 0)
+                FROM Order o
+                WHERE o.user.id = :userId
+                AND o.orderStatus = :orderStatus
+                """)
+        long sumTotalSellingPriceByUserIdAndOrderStatus(
+                @Param("userId") Long userId,
+                @Param("orderStatus") OrderStatus orderStatus);
+
     // ── admin: all orders ────────────────────────────────────────────────────
     /**
      * Override findAll() with a JOIN FETCH variant. Never call the inherited
@@ -66,21 +81,12 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             LEFT JOIN FETCH o.user
             """)
     List<Order> findAllWithDetails();
+
+    @Query("SELECT o FROM Order o LEFT JOIN FETCH o.orderItems oi " +
+       "LEFT JOIN FETCH oi.product p " +
+       "LEFT JOIN FETCH p.seller " +
+       "LEFT JOIN FETCH p.category " +
+       "WHERE o.id = :id")
+     Optional<Order> findByIdWithItemsAndProducts(@Param("id") Long id);
 }
 
-// package com.allan.repository;
-
-// import java.util.List;
-
-// import org.springframework.data.jpa.repository.JpaRepository;
-
-// import com.allan.model.Order;
-// import com.allan.domain.OrderStatus;
-
-// public interface OrderRepository extends JpaRepository<Order, Long> {
-
-//     List<Order> findByUserId(Long userId);
-//     List<Order> findBySellerId(Long sellerId);
-//     List<Order> findByOrderStatus(OrderStatus orderStatus);
-
-// }

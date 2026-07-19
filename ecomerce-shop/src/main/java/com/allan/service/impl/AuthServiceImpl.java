@@ -28,7 +28,7 @@ import com.allan.repository.UserRepository;
 import com.allan.repository.VerificationCodeRepository;
 import com.allan.request.LoginRequest;
 import com.allan.response.AuthResponse;
-import com.allan.response.SignupRequest;
+import com.allan.request.SignupRequest;
 import com.allan.service.AuthService;
 import com.allan.service.EmailService;
 import com.allan.utils.OtpUtil;

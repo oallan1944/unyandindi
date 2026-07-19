@@ -50,8 +50,8 @@ public class CartServiceImpl implements CartService {
 
         Cart cart = cartRepository.findByUserId(user.getId());
 
-        int totalPrice = 0;
-        int totalDiscountedPrice = 0;
+        long totalPrice = 0;
+        long totalDiscountedPrice = 0;
         int totalItem = 0;
 
         for (CartItem cartItem : cart.getCartItems()) {
@@ -69,14 +69,14 @@ public class CartServiceImpl implements CartService {
         return cart;
     }
 
-    private int calculateDiscountPercentage(int mrpPrice, int sellingPrice) {
+    private long calculateDiscountPercentage(long mrpPrice, long sellingPrice) {
         if (mrpPrice <= 0) {
             return 0;
         }
-        double discount = mrpPrice - sellingPrice;
-        double discountPercentage = (discount / mrpPrice) * 100;
+        long discount = mrpPrice - sellingPrice;
+        long discountPercentage = (discount / mrpPrice) * 100;
 
-        return (int) discountPercentage;
+        return (long) discountPercentage;
 
     }
 

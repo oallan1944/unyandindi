@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.allan.config.JwtProvider;
 import com.allan.domain.AccountStatus;
+import com.allan.domain.CouponStatus;
 import com.allan.domain.OrderStatus;
 import com.allan.dto.OrderDTO;
 import com.allan.model.Admin;
@@ -323,17 +324,46 @@ public class AdminServiceImpl implements AdminService {
     @Override
     @Transactional
     public Coupon createCoupon(Coupon coupon) throws Exception {
-        if (couponRepository.findByCode(coupon.getCode()) != null) {
-            throw new Exception("Coupon with code '" + coupon.getCode() + "' already exists.");
-        }
-        if (coupon.getDiscountPercentage() < 0 || coupon.getDiscountPercentage() > 100) {
-            throw new Exception("Coupon discount must be between 0 and 100.");
-        }
-        coupon.setActive(true);
-        Coupon saved = couponRepository.save(coupon);
-        log.info("Coupon created: {}", saved.getCode());
-        return saved;
+
+    // ── 1. Code uniqueness ────────────────────────────────────────────────
+    String normalizedCode = coupon.getCode().toUpperCase().trim();
+    if (couponRepository.findByCode(normalizedCode) != null) {
+        throw new Exception("Coupon with code '" + normalizedCode + "' already exists.");
     }
+    coupon.setCode(normalizedCode);
+
+    // ── 2. Validate parent promotion exists ───────────────────────────────
+    // Coupon is meaningless without a Promotion — the promotion holds
+    // the discount value (on PromotionReward), not the coupon itself.
+    if (coupon.getPromotion() == null || coupon.getPromotion().getId() == null) {
+        throw new Exception("Coupon must be linked to a valid Promotion.");
+    }
+
+    // ── 3. Usage limit guard ──────────────────────────────────────────────
+    // Vendors must always set an explicit limit — null (unlimited) is
+    // only acceptable for admin platform coupons.
+    if (coupon.getUsageLimit() != null && coupon.getUsageLimit() < 1) {
+        throw new Exception("Usage limit must be at least 1 if specified.");
+    }
+
+    // ── 4. Per-customer limit guard ───────────────────────────────────────
+    if (coupon.getUsagePerCustomer() != null && coupon.getUsagePerCustomer() < 1) {
+        throw new Exception("Usage per customer must be at least 1 if specified.");
+    }
+
+    // ── 5. Safe defaults ──────────────────────────────────────────────────
+    // Status and usedCount have defaults on the entity, but set them
+    // explicitly here so the intent is visible at the service layer.
+    coupon.setStatus(CouponStatus.ACTIVE);
+    coupon.setUsedCount(0);
+
+    Coupon saved = couponRepository.save(coupon);
+    log.info("Coupon created: code={}, promotionId={}, usageLimit={}",
+            saved.getCode(),
+            saved.getPromotion().getId(),
+            saved.getUsageLimit());
+    return saved;
+}
 
     @Override
     @Transactional

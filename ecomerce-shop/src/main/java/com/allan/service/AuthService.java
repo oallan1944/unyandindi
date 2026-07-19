@@ -3,7 +3,7 @@ package com.allan.service;
 import com.allan.domain.USER_ROLE;
 import com.allan.request.LoginRequest;
 import com.allan.response.AuthResponse;
-import com.allan.response.SignupRequest;
+import com.allan.request.SignupRequest;
 
 public interface AuthService {
 
