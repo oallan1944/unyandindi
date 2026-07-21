@@ -27,7 +27,6 @@ public interface AdminService {
 
     // ── Products ──────────────────────────────────────
     List<Product> getAllProducts(String category) throws Exception;
-    Product addToElectricCategory(Product product) throws Exception;
     void deleteProduct(Long id) throws Exception;
 
     // ── Deals ─────────────────────────────────────────

@@ -202,15 +202,6 @@ public ResponseEntity<List<OrderDTO>> getAllOrders(
     }
 
 
-    /** Add a product to the Electronics home section. */
-    @PostMapping("/products/electric-category")
-    public ResponseEntity<Product> addProductToElectricCategory(
-            @RequestBody Product product) throws Exception {
-        Product saved = adminService.addToElectricCategory(product);
-        log.info("Product {} added to Electronics category", saved.getId());
-        return ResponseEntity.status(HttpStatus.CREATED).body(saved);
-    }
-
     /** Permanently delete a product. */
     @DeleteMapping("/products/{id}")
     public ResponseEntity<Void> deleteProduct(@PathVariable Long id) throws Exception {

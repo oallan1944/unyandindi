@@ -37,11 +37,15 @@ public class SecurityConfig {
                         "/api/admin/login",
                         "/api/admin/verify/**"
                 ).permitAll()
+        
+                .requestMatchers(
+                        "/admin/home-category/**",
+                        "home/categories"
+                ).hasAuthority("ROLE_ADMIN")
                 
                 // ── Public home/category endpoints ──────────────
                 .requestMatchers(
                         "/home/**",
-                        "/home/categories",
                         "/api/home/**",
                         "/home/flash-sales"
                 ).permitAll()

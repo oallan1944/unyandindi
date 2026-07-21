@@ -43,6 +43,36 @@ public class HomeCategoryController {
         return new ResponseEntity<>(home, HttpStatus.ACCEPTED);
     }
 
+    // ── Admin: create a single home category tile ───
+    /**
+     * Adds one new tile to a homepage section (GRID, SHOP_BY_CATEGORIES,
+     * ELECTRIC_CATEGORIES, or DEALS — {@code section} is part of the request
+     * body, so this one endpoint serves every section rather than needing
+     * one per section).
+     *
+     * <p>Distinct from {@link #createHomeCategories}, which only seeds when
+     * the table is empty — this is the ongoing "add one more tile" path an
+     * admin needs after initial setup.
+     */
+
+     @PostMapping("/admin/home-category")
+    public ResponseEntity<HomeCategory> createSingleHomeCategory(
+            @RequestBody HomeCategory homeCategory) throws Exception {
+        if (homeCategory.getName() == null || homeCategory.getName().isBlank()) {
+            throw new Exception("Home category name is required.");
+        }
+        if (homeCategory.getSection() == null) {
+            throw new Exception("Home category section is required.");
+        }
+        // id is never trusted from the request body — this is always a
+        // create, never an accidental overwrite of an existing row.
+        homeCategory.setId(null);
+ 
+        HomeCategory saved = homeCategoryService.createHomeCategory(homeCategory);
+        return ResponseEntity.status(HttpStatus.CREATED).body(saved);
+    }
+ 
+
     // ── Admin: get all home categories ──────────────
     @GetMapping("/admin/home-category")
     public ResponseEntity<List<HomeCategory>> getHomeCategory() {

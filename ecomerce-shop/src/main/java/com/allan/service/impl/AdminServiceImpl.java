@@ -251,15 +251,6 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     @Transactional
-    public Product addToElectricCategory(Product product) throws Exception {
-        product.setCreatedAt(LocalDateTime.now());
-        Product saved = productRepository.save(product);
-        log.info("Product {} added to Electronics category", saved.getId());
-        return saved;
-    }
-
-    @Override
-    @Transactional
     public void deleteProduct(Long id) throws Exception {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new Exception("Product not found with id: " + id));
