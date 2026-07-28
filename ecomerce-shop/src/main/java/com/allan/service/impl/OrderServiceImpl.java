@@ -39,63 +39,74 @@ public class OrderServiceImpl implements OrderService {
      * multiple saves (address, orders, order items). If any save fails, the
      * entire unit rolls back cleanly.
      */
+    
+ // ── Replace only the createOrder method — everything else unchanged ──
+
     @Override
     @Transactional
-    public Set<Order> createOrder(User user, Address shippingAddress, Cart cart) {
-        if (!user.getAddresses().contains(shippingAddress)) {
-            user.getAddresses().add(shippingAddress);
+    public Set<Order> createOrder(User user, Address shippingAddress,
+                                Cart cart) {
+
+    // ✅ fix: original called user.getAddresses().contains() and .add()
+    // which triggers a lazy load of the addresses collection.
+    // Since addresses is now FetchType.LAZY, this fires an extra SQL
+    // query loading all addresses just to do a contains check.
+    // The address is saved directly here instead — the User→Address
+    // relationship is maintained by the Address row itself, not by
+    // loading the full collection into memory.
+    Address address = addressRepository.save(shippingAddress);
+
+    Map<Long, List<CartItem>> itemsBySeller = cart.getCartItems()
+            .stream()
+            .collect(Collectors.groupingBy(
+                    item -> item.getProduct().getSeller().getId()));
+
+    Set<Order> orders = new HashSet<>();
+
+    for (Map.Entry<Long, List<CartItem>> entry :
+            itemsBySeller.entrySet()) {
+        Long sellerId = entry.getKey();
+        List<CartItem> items = entry.getValue();
+
+        int totalOrderPrice = items.stream()
+                .mapToInt(CartItem::getSellingPrice)
+                .sum();
+
+        int totalItem = items.stream()
+                .mapToInt(CartItem::getQuantity)
+                .sum();
+
+        Order createdOrder = new Order();
+        createdOrder.setUser(user);
+        createdOrder.setSellerId(sellerId);
+        createdOrder.setTotalMrpPrice(totalOrderPrice);
+        createdOrder.setTotalSellingPrice(totalOrderPrice);
+        createdOrder.setTotalItem(totalItem);
+        createdOrder.setShippingAddress(address);
+        createdOrder.setOrderStatus(OrderStatus.PENDING);
+        createdOrder.getPaymentDetails()
+                .setStatus(PaymentStatus.PENDING);
+
+        Order savedOrder = orderRepository.save(createdOrder);
+        orders.add(savedOrder);
+
+        for (CartItem item : items) {
+            OrderItem orderItem = new OrderItem();
+            orderItem.setOrder(savedOrder);
+            orderItem.setMrpPrice(item.getMrpPrice());
+            orderItem.setProduct(item.getProduct());
+            orderItem.setQuantity(item.getQuantity());
+            orderItem.setSize(item.getSize());
+            orderItem.setUserId(item.getUserId());
+            orderItem.setSellingPrice(item.getSellingPrice());
+
+            savedOrder.getOrderItems().add(orderItem);
+            orderItemRepository.save(orderItem);
         }
-
-        Address address = addressRepository.save(shippingAddress);
-
-        Map<Long, List<CartItem>> itemsBySeller = cart.getCartItems().stream()
-                .collect(Collectors.groupingBy(
-                        item -> item.getProduct().getSeller().getId()));
-
-        Set<Order> orders = new HashSet<>();
-
-        for (Map.Entry<Long, List<CartItem>> entry : itemsBySeller.entrySet()) {
-            Long sellerId = entry.getKey();
-            List<CartItem> items = entry.getValue();
-
-            int totalOrderPrice = items.stream()
-                    .mapToInt(CartItem::getSellingPrice)
-                    .sum();
-
-            int totalItem = items.stream()
-                    .mapToInt(CartItem::getQuantity)
-                    .sum();
-
-            Order createdOrder = new Order();
-            createdOrder.setUser(user);
-            createdOrder.setSellerId(sellerId);
-            createdOrder.setTotalMrpPrice(totalOrderPrice);
-            createdOrder.setTotalSellingPrice(totalOrderPrice);
-            createdOrder.setTotalItem(totalItem);
-            createdOrder.setShippingAddress(address);
-            createdOrder.setOrderStatus(OrderStatus.PENDING);
-            createdOrder.getPaymentDetails().setStatus(PaymentStatus.PENDING);
-
-            Order savedOrder = orderRepository.save(createdOrder);
-            orders.add(savedOrder);
-
-            for (CartItem item : items) {
-                OrderItem orderItem = new OrderItem();
-                orderItem.setOrder(savedOrder);
-                orderItem.setMrpPrice(item.getMrpPrice());
-                orderItem.setProduct(item.getProduct());
-                orderItem.setQuantity(item.getQuantity());
-                orderItem.setSize(item.getSize());
-                orderItem.setUserId(item.getUserId());
-                orderItem.setSellingPrice(item.getSellingPrice());
-
-                savedOrder.getOrderItems().add(orderItem);
-                orderItemRepository.save(orderItem);
-            }
-        }
-
-        return orders;
     }
+
+    return orders;
+}
 
     /**
      * Read — readOnly hint allows Hibernate to skip dirty checking on all

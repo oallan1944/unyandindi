@@ -57,7 +57,7 @@ import java.util.List;
 @Table(
     name = "promotions",
     indexes = {
-        @Index(name = "idx_promotion_vendor",       columnList = "vendor_id"),
+        @Index(name = "idx_promotion_vendor",       columnList = "seller_id"),
         @Index(name = "idx_promotion_status",       columnList = "status"),
         @Index(name = "idx_promotion_scope",        columnList = "scope"),
         @Index(name = "idx_promotion_active_dates", columnList = "starts_at, ends_at"),

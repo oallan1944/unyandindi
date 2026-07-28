@@ -39,10 +39,10 @@ import java.time.LocalDateTime;
     name = "coupon_redemptions",
     indexes = {
         @Index(name = "idx_redemption_coupon",      columnList = "coupon_id"),
-        @Index(name = "idx_redemption_customer",    columnList = "customer_id"),
+        @Index(name = "idx_redemption_customer",    columnList = "user_id"),
         @Index(name = "idx_redemption_order",       columnList = "order_id",  unique = true),
         // Composite — the most common query: "has customer X used coupon Y?"
-        @Index(name = "idx_redemption_coupon_cust", columnList = "coupon_id, customer_id")
+        @Index(name = "idx_redemption_coupon_cust", columnList = "coupon_id, user_id")
     }
 )
 @EntityListeners(AuditingEntityListener.class)

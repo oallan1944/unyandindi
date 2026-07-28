@@ -1,5 +1,6 @@
 package com.allan.service.impl;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -16,7 +17,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.allan.config.JwtProvider;
+import com.allan.domain.AuthProvider;
 import com.allan.domain.USER_ROLE;
+import com.allan.model.Admin;
 import com.allan.model.Cart;
 import com.allan.model.Seller;
 import com.allan.model.User;
@@ -27,12 +30,11 @@ import com.allan.repository.SellerRepository;
 import com.allan.repository.UserRepository;
 import com.allan.repository.VerificationCodeRepository;
 import com.allan.request.LoginRequest;
-import com.allan.response.AuthResponse;
 import com.allan.request.SignupRequest;
+import com.allan.response.AuthResponse;
 import com.allan.service.AuthService;
 import com.allan.service.EmailService;
 import com.allan.utils.OtpUtil;
-import com.allan.model.Admin;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -50,7 +52,7 @@ public class AuthServiceImpl implements AuthService {
     private final EmailService emailService;
     private final CustomUserServiceImpl customUserService;
     private final SellerRepository sellerRepository;
-    
+    private final AdminRepository adminRepository;
 
     // ─────────────────────────────────────────────
     // SIGNUP
@@ -60,12 +62,12 @@ public class AuthServiceImpl implements AuthService {
     @Transactional
     public String createUser(SignupRequest req) throws Exception {
 
-        // ✅ Optional.orElse(null) — clean unwrap for null check
         VerificationCode verificationCode = verificationCodeRepository
                 .findByEmail(req.getEmail())
                 .orElse(null);
 
-        if (verificationCode == null || !verificationCode.getOtp().equals(req.getOtp())) {
+        if (verificationCode == null
+                || !verificationCode.getOtp().equals(req.getOtp())) {
             log.warn("Signup OTP mismatch for email: {}", req.getEmail());
             throw new Exception("Wrong OTP.");
         }
@@ -79,20 +81,31 @@ public class AuthServiceImpl implements AuthService {
             createdUser.setMobile("");
             createdUser.setPassword(passwordEncoder.encode(req.getOtp()));
 
+            // ✅ set all new fields — prevents NOT NULL constraint violations
+            // and ensures account-linking logic has correct defaults
+            createdUser.setPrimaryAuthProvider(AuthProvider.LOCAL);
+            createdUser.setGoogleEnabled(false);
+            createdUser.setOtpEnabled(true);
+            // ✅ LOCAL signup = profile is complete — user provided fullName
+            // via signup form and will add mobile/address at first purchase
+            createdUser.setProfileComplete(true);
+            createdUser.setEmailVerified(true); // OTP verification = email verified
+            createdUser.setCreatedAt(LocalDateTime.now());
+
             user = userRepository.save(createdUser);
 
             Cart cart = new Cart();
             cart.setUser(user);
             cartRepository.save(cart);
 
-            log.info("New user created: {}", user.getEmail());
+            log.info("New LOCAL user created: {}", user.getEmail());
         }
 
-        // ✅ consume OTP after successful signup
         verificationCodeRepository.delete(verificationCode);
 
         List<GrantedAuthority> authorities = new ArrayList<>();
-        authorities.add(new SimpleGrantedAuthority(USER_ROLE.ROLE_CUSTOMER.toString()));
+        authorities.add(new SimpleGrantedAuthority(
+                USER_ROLE.ROLE_CUSTOMER.toString()));
 
         Authentication authentication = new UsernamePasswordAuthenticationToken(
                 req.getEmail(), null, authorities);
@@ -117,17 +130,29 @@ public class AuthServiceImpl implements AuthService {
             if (role.equals(USER_ROLE.ROLE_SELLER)) {
                 Seller seller = sellerRepository.findByEmail(email);
                 if (seller == null) {
-                    throw new Exception("Seller not found for email: " + email);
+                    throw new Exception(
+                            "Seller not found for email: " + email);
+                }
+            } else if (role.equals(USER_ROLE.ROLE_ADMIN)) {
+                Admin admin = adminRepository.findByEmail(email);
+                if (admin == null) {
+                    throw new Exception(
+                            "Admin not found for email: " + email);
                 }
             } else {
                 User user = userRepository.findByEmail(email);
                 if (user == null) {
-                    throw new Exception("User not found for email: " + email);
+                    throw new Exception(
+                            "User not found for email: " + email);
                 }
+
+                // ✅ Google-primary users with otpEnabled=true can use OTP
+                // as a fallback. This is intentional — it's the safety net
+                // that lets them sign in if they lose Google access.
+                // No special handling needed here — OTP flow is the same.
             }
         }
 
-        // ✅ Optional.ifPresent — clean delete of existing OTP without null check
         verificationCodeRepository.findByEmail(email)
                 .ifPresent(verificationCodeRepository::delete);
 
@@ -138,8 +163,8 @@ public class AuthServiceImpl implements AuthService {
         verificationCodeRepository.save(verificationCode);
 
         String subject = "Huru Bazar Login/Signup OTP";
-        String text = "Your Login/Signup OTP is: " + otp +
-                "\nPlease do not share this OTP with anyone.";
+        String text = "Your Login/Signup OTP is: " + otp
+                + "\nPlease do not share this OTP with anyone.";
         emailService.sendVerificationOtpEmail(email, otp, subject, text);
 
         log.info("OTP sent to: {}", email);
@@ -159,7 +184,8 @@ public class AuthServiceImpl implements AuthService {
 
         String token = jwtProvider.generateToken(authentication);
 
-        Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
+        Collection<? extends GrantedAuthority> authorities =
+                authentication.getAuthorities();
         String roleName = authorities.isEmpty()
                 ? null
                 : authorities.iterator().next().getAuthority();
@@ -177,49 +203,58 @@ public class AuthServiceImpl implements AuthService {
     // AUTHENTICATE
     // ─────────────────────────────────────────────
 
-    private Authentication authenticate(String username, String otp) throws Exception {
-        UserDetails userDetails = customUserService.loadUserByUsername(username);
+    private Authentication authenticate(String username,
+                                         String otp) throws Exception {
+        UserDetails userDetails =
+                customUserService.loadUserByUsername(username);
 
         if (userDetails == null) {
             throw new BadCredentialsException("Invalid username.");
         }
 
         final String SELLER_PREFIX = "seller_";
-        String emailForOtpLookup = username; 
+        String emailForOtpLookup = username;
 
-        // ✅ strip seller_ prefix for OTP lookup — OTP is saved against plain email
         if (username.startsWith(SELLER_PREFIX)) {
-            emailForOtpLookup = username.substring(SELLER_PREFIX.length());
-            
+            emailForOtpLookup =
+                    username.substring(SELLER_PREFIX.length());
 
-            Seller seller = sellerRepository.findByEmail(emailForOtpLookup);
+            Seller seller =
+                    sellerRepository.findByEmail(emailForOtpLookup);
             if (seller == null) {
-                throw new Exception("Seller not found for email: " + emailForOtpLookup);
+                throw new Exception(
+                        "Seller not found for email: " + emailForOtpLookup);
             }
         }
 
-        
+        // ✅ Google-only guard — if the loaded UserDetails has the
+        // sentinel password set by CustomUserServiceImpl for Google-only
+        // accounts, reject OTP login immediately with a clear message.
+        // This prevents the OTP flow from being used to access an account
+        // that was created via Google and has never set up OTP.
+        if ("{noop}GOOGLE_ONLY_NO_OTP".equals(
+                userDetails.getPassword())) {
+            throw new Exception(
+                    "This account uses Google sign-in. "
+                    + "Please sign in with Google instead.");
+        }
 
-        // ✅ Optional.orElse(null) — clean unwrap for null check
         VerificationCode verificationCode = verificationCodeRepository
                 .findByEmail(emailForOtpLookup)
                 .orElse(null);
 
-            log.info("Username = {}", username);
-            log.info("Email used for OTP lookup = {}", emailForOtpLookup);
+        log.info("Username = {}", username);
+        log.info("Email used for OTP lookup = {}", emailForOtpLookup);
 
-        if (verificationCode == null || !verificationCode.getOtp().equals(otp)) {
+        if (verificationCode == null
+                || !verificationCode.getOtp().equals(otp)) {
             log.warn("OTP mismatch for: {}", emailForOtpLookup);
             throw new Exception("OTP does not match.");
         }
 
-        // ✅ consume OTP after successful login — prevents replay attacks
         verificationCodeRepository.delete(verificationCode);
 
         return new UsernamePasswordAuthenticationToken(
                 userDetails, null, userDetails.getAuthorities());
     }
 }
-
-
-

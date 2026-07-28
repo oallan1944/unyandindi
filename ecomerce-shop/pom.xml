@@ -156,6 +156,12 @@
 			<artifactId>spring-boot-starter-data-redis</artifactId>
     	</dependency>
 
+		<!-- pom.xml — add inside <dependencies> -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-oauth2-client</artifactId>
+		</dependency>
+
 		<!-- <dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-mail</artifactId>

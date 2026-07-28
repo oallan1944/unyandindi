@@ -1,6 +1,7 @@
 package com.allan.service.impl;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.allan.config.JwtProvider;
 import com.allan.model.User;
@@ -17,6 +18,7 @@ public class UserServiceImpl implements UserService {
     private final JwtProvider jwtProvider;
     
     @Override
+    @Transactional(readOnly = true)
     public User findUserByJwtToken(String jwt) throws Exception {
         String email = jwtProvider.getEmailFromJwtToken(jwt);
 
@@ -24,6 +26,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public User findUserByEmail(String email) throws Exception {
         User user = userRepository.findByEmail(email);
         if (user == null) {
