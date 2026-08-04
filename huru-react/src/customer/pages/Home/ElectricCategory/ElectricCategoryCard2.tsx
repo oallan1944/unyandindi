@@ -51,3 +51,58 @@ const ElectricCategoryCard2 = ({ item }: { item: HomeCategory }) => {
 }
 
 export default ElectricCategoryCard2
+
+
+// import React from "react";
+// import { HomeCategory } from "../../../../types/HomeCategoryType";
+// import { Button } from "@mui/material";
+
+// const ElectricCategoryCard2 = ({
+//   item,
+// }: {
+//   item: HomeCategory;
+// }) => {
+//   return (
+//     <div className="grid grid-cols-1 sm:grid-cols-2 bg-electric-card-color rounded-lg overflow-hidden h-full">
+
+//       {/* Content */}
+//       <div className="flex flex-col justify-center gap-4 p-6">
+
+//         <h2 className="text-xl font-bold">
+//           Best Deals
+//         </h2>
+
+//         <h1 className="text-3xl font-bold">
+//           {item.name}
+//         </h1>
+
+//         <h2 className="text-2xl font-bold text-brandWhite-color">
+//           20% OFF
+//         </h2>
+
+//         <Button
+//           variant="outlined"
+//           className="text-white"
+//         >
+//           Buy Now
+//         </Button>
+
+//       </div>
+
+//       {/* Image */}
+
+//       <div className="flex justify-center items-center p-4">
+
+//         <img
+//           src={item.image}
+//           alt={item.name}
+//           className="h-[180px] object-contain transition-transform duration-300 hover:scale-105"
+//         />
+
+//       </div>
+
+//     </div>
+//   );
+// };
+
+// export default ElectricCategoryCard2;

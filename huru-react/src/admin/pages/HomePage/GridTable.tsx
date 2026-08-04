@@ -1,12 +1,22 @@
-import React from 'react'
+// GridTable.tsx
+import React, { useEffect } from 'react'
 import HomeCategoryTable from './HomeCategoryTable'
-import { useAppSelector } from '../../../State/store';
+import { useAppDispatch, useAppSelector } from '../../../State/store';
+import { fetchHomeCategories } from '../../../State/admin/AdminSlice';
 
 const GridTable = () => {
-    const { customer } = useAppSelector(store => store);
+    const dispatch = useAppDispatch();
+    const { admin } = useAppSelector(store => store);
+
+    useEffect(() => {
+        dispatch(fetchHomeCategories());
+    }, [dispatch]);
+
+    const gridCategories = admin.categories.filter(c => c.section === "GRID");
+
     return (
         <div>
-            <HomeCategoryTable data={customer.homePageData?.grid || []} />
+            <HomeCategoryTable data={gridCategories} section="GRID" />
         </div>
     )
 }

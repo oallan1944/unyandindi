@@ -1,5 +1,4 @@
 import React, { useEffect } from 'react'
-import ElectricCategory from './ElectricCategory/ElectricCategory'
 import Deal from './Deal/Deal'
 import ShopByCategory from './ShopByCategory/ShopByCategory'
 import Button from '@mui/material/Button'

@@ -14,16 +14,22 @@ interface menuItem {
 interface DrawerListProp {
     menu: menuItem[],
     menu2: menuItem[],
-    toggleDrawer: () => void
+    toggleDrawer: () => void,
+    onLogout?: () => void   // optional override — default remains customer/seller logout
 }
-const DrawerList = ({ menu, menu2, toggleDrawer }: DrawerListProp) => {
+const DrawerList = ({ menu, menu2, toggleDrawer, onLogout }: DrawerListProp) => {
     const location = useLocation();
     const navigate = useNavigate()
     const dispatch = useAppDispatch();
 
-    const handleLogout = () => [
-        dispatch(logout(navigate))
-    ]
+    const handleLogout = () => {
+        if (onLogout) {
+            onLogout()
+        } else {
+            dispatch(logout(navigate))
+        }
+    }
+
     return (
         <div className='h-full'>
             <div className='flex flex-col justify-between h-full w-[300px] border-r py-5'>

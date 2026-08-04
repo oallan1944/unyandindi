@@ -5,6 +5,22 @@ import { api } from "../../config/Api";
 
 const API_URL = '/admin';
 
+export const createHomeCategory = createAsyncThunk<HomeCategory, HomeCategory>(
+    'homeCategory/createHomeCategory',
+    async (data, { rejectWithValue }) => {
+        try {
+            const response = await api.post(`${API_URL}/home-category`, data);
+            return response.data;
+        } catch (error: any) {
+            if (error.response && error.response.data) {
+                return rejectWithValue(error.response.data);
+            } else {
+                return rejectWithValue('An error occurred while creating the category');
+            }
+        }
+    }
+);
+
 export const updateHomeCategory = createAsyncThunk<HomeCategory,
     { id: number; data: HomeCategory }>
     (
@@ -12,10 +28,8 @@ export const updateHomeCategory = createAsyncThunk<HomeCategory,
         async ({ id, data }, { rejectWithValue }) => {
             try {
                 const response = await api.patch(`${API_URL}/home-category/${id}`, data);
-                console.log("category updated ", response)
                 return response.data;
             } catch (error: any) {
-                console.log("Error", error)
                 if (error.response && error.response.data) {
                     return rejectWithValue(error.response.data);
                 } else {
@@ -30,10 +44,8 @@ export const fetchHomeCategories = createAsyncThunk<HomeCategory[]>(
     async (_, { rejectWithValue }) => {
         try {
             const response = await api.get(`${API_URL}/home-category`);
-            console.log("categories", response.data)
             return response.data;
         } catch (error: any) {
-            console.log("error", error.response)
             return rejectWithValue(error.response?.data?.message || 'Failed to fetch categories')
         }
     }
@@ -53,51 +65,59 @@ const initialState: HomeCategoryState = {
     categoryUpdated: false,
 }
 
-// create the slice
 const homeCategorySlice = createSlice({
     name: 'homeCategory',
     initialState,
     reducers: {},
     extraReducers: (builder) => {
-        // Handle the pending state for updateHomeCategory
+        builder.addCase(createHomeCategory.pending, (state) => {
+            state.loading = true;
+            state.error = null;
+        });
+        builder.addCase(createHomeCategory.fulfilled, (state, action) => {
+            state.loading = false;
+            state.categories.push(action.payload);
+        });
+        builder.addCase(createHomeCategory.rejected, (state, action) => {
+            state.loading = false;
+            state.error = action.payload as string;
+        });
+
         builder.addCase(updateHomeCategory.pending, (state) => {
             state.loading = true;
             state.error = null;
             state.categoryUpdated = false;
         });
-        // handle fulfilled state
         builder.addCase(updateHomeCategory.fulfilled, (state, action) => {
             state.loading = false;
             state.categoryUpdated = true;
-            // find the category by Id
-            const index = state.categories.findIndex((category) => category.id)
+            const index = state.categories.findIndex(
+                (category) => category.id === action.payload.id
+            );
             if (index !== -1) {
                 state.categories[index] = action.payload;
             } else {
                 state.categories.push(action.payload);
             }
-
+        });
+        builder.addCase(updateHomeCategory.rejected, (state, action) => {
+            state.loading = false;
+            state.error = action.payload as string;
         });
 
-        // handle reject
-        builder.addCase(updateHomeCategory.rejected, (state, action) => {
-            state.loading = true;
-            state.error = action.payload as string;
-        })
-        // fetch home category
         builder.addCase(fetchHomeCategories.pending, (state) => {
             state.loading = true;
             state.error = null;
             state.categoryUpdated = false;
-        })
+        });
         builder.addCase(fetchHomeCategories.fulfilled, (state, action) => {
             state.loading = false;
             state.categories = action.payload;
-        })
+        });
         builder.addCase(fetchHomeCategories.rejected, (state, action) => {
             state.loading = false;
             state.error = action.payload as string;
-        })
+        });
     },
 });
 

@@ -85,6 +85,8 @@ public interface ProductRepository extends JpaRepository<Product, Long>,
             @Param("maxPrice") Integer maxPrice,
             @Param("minDiscount") Integer minDiscount,
             Pageable pageable);
+
+       Optional<Product> findFirstByCategory_CategoryIdOrderByCreatedAtDesc(String categoryId);
 }
 
 

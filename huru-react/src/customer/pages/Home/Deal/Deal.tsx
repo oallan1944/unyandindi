@@ -63,3 +63,4 @@ const Deal = () => {
 }
 
 export default Deal
+

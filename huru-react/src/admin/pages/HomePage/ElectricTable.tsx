@@ -1,13 +1,22 @@
-import React from 'react'
+// ElectricTable.tsx
+import React, { useEffect } from 'react'
 import HomeCategoryTable from './HomeCategoryTable';
-import { useAppSelector } from '../../../State/store';
+import { useAppDispatch, useAppSelector } from '../../../State/store';
+import { fetchHomeCategories } from '../../../State/admin/AdminSlice';
 
 const ElectricTable = () => {
-    const { customer } = useAppSelector(store => store);
-     const electricCategories = customer.homePageData?.electricCategories || [];
+    const dispatch = useAppDispatch();
+    const { admin } = useAppSelector(store => store);
+
+    useEffect(() => {
+        dispatch(fetchHomeCategories());
+    }, [dispatch]);
+
+    const electricCategories = admin.categories.filter(c => c.section === "ELECTRIC_CATEGORIES");
+
     return (
         <div>
-            <HomeCategoryTable data={electricCategories} />
+            <HomeCategoryTable data={electricCategories} section="ELECTRIC_CATEGORIES" />
         </div>
     );
 };
