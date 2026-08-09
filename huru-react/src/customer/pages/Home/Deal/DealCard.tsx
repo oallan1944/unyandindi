@@ -1,4 +1,3 @@
-import React from 'react'
 import { Deal } from '../../../../types/DealType'
 import { Button } from '@mui/material'
 

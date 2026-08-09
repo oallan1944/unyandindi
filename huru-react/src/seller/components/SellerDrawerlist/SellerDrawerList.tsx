@@ -1,5 +1,4 @@
 import { AccountBalanceWallet, AccountBox, Add, Dashboard, Inventory, Logout, Receipt, ShoppingBag } from '@mui/icons-material'
-import React from 'react'
 import DrawerList from '../../../component/DrawerList';
 
 const menu = [

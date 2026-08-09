@@ -1,6 +1,5 @@
 import { Add, Close, Remove } from '@mui/icons-material'
 import { Button, Divider, IconButton } from '@mui/material'
-import React from 'react'
 import { CartItem } from '../../../types/cartType'
 import { useAppDispatch } from '../../../State/store'
 import { deleteCartItem, fetchUserCart, updateCartItem } from '../../../State/customer/cartSlice'

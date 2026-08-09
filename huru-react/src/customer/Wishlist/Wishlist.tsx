@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import { useEffect } from 'react';
 import WishlistProductCard from './WishlistProductCard'
 import { useAppDispatch, useAppSelector } from '../../State/store'
 import { getWishlistByUserId } from '../../State/customer/wishlistSlice'

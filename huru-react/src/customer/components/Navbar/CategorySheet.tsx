@@ -1,4 +1,3 @@
-import React from 'react'
 import { menLevelTwo } from '../../../Data/Category/Level two/menLevelTwo'
 import { womenLevelTwo } from '../../../Data/Category/Level two/womenLevelTwo'
 import { electronicsLevelTwo } from '../../../Data/Category/Level two/electronicsLevelTwo'
@@ -29,7 +28,7 @@ const categoryThree: { [key: string]: any[] } = {
     sports_fitness: fitnessLevelThree
 }
 
-const CategorySheet = ({ selectedCategory, setShowSheet }: any) => {
+const CategorySheet = ({ selectedCategory }: any) => {
     const navigate = useNavigate()
     // filtering child category
     const childCategory = (category: any, parentCategoryId: any) => {

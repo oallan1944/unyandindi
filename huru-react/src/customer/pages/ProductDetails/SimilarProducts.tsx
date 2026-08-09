@@ -1,4 +1,3 @@
-import React from 'react'
 import SimilarProductsCard from './SimilarProductsCard'
 
 const SimilarProducts = () => {

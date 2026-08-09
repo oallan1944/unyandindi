@@ -1,5 +1,4 @@
 import { Divider, ListItemIcon, ListItemText } from '@mui/material'
-import React from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useAppDispatch } from '../State/store'
 import { logout } from '../State/authSlice'
@@ -14,10 +13,10 @@ interface menuItem {
 interface DrawerListProp {
     menu: menuItem[],
     menu2: menuItem[],
-    toggleDrawer: () => void,
+    toggleDrawer: () => void;
     onLogout?: () => void   // optional override — default remains customer/seller logout
 }
-const DrawerList = ({ menu, menu2, toggleDrawer, onLogout }: DrawerListProp) => {
+const DrawerList = ({ menu, menu2, onLogout }: DrawerListProp) => {
     const location = useLocation();
     const navigate = useNavigate()
     const dispatch = useAppDispatch();

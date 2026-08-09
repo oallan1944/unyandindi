@@ -2,10 +2,8 @@ import { Dayjs } from 'dayjs'
 import { useFormik } from 'formik'
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 
-import React from 'react'
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { Box, Button, Grid, TextField } from '@mui/material';
-import { date } from 'yup';
 
 interface CouponForValues {
     code: string,

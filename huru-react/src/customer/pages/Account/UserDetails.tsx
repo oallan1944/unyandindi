@@ -1,4 +1,3 @@
-import React from 'react'
 import ProfileFieldCard from '../../../component/ProfileFieldCard'
 import { Divider } from '@mui/material'
 import { useAppSelector } from '../../../State/store'

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { ThemeProvider } from '@mui/material';
 import Navbar from './customer/components/Navbar/navbar';
 import customTheme from './Theme/customTheme';

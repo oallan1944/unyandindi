@@ -1,5 +1,5 @@
 import { Button } from '@mui/material'
-import React, { useEffect } from 'react'
+import { useEffect } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useAppDispatch } from '../../State/store'
 import { paymentSuccess } from '../../State/customer/orderSlice'

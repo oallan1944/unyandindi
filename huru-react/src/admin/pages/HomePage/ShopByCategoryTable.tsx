@@ -1,5 +1,5 @@
 // ShopByCategoryTable.tsx
-import React, { useEffect } from 'react'
+import { useEffect } from 'react'
 import HomeCategoryTable from './HomeCategoryTable'
 import { useAppDispatch, useAppSelector } from '../../../State/store'
 import { fetchHomeCategories } from '../../../State/admin/AdminSlice';

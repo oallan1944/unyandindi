@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react';
 import CartItem from './CatItem'
 import { Close, LocalOffer } from '@mui/icons-material'
 import { teal } from '@mui/material/colors'

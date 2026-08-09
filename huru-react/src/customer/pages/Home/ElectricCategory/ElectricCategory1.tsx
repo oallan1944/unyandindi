@@ -1,4 +1,3 @@
-import React from 'react'
 import { useAppSelector } from '../../../../State/store'
 import Slider from 'react-slick'
 import ElectricCategoryCard2 from './ElectricCategoryCard2'

@@ -21,12 +21,12 @@ class ErrorBoundary extends Component<Props, State> {
         return { hasError: true, error }
     }
 
-    componentDidCatch(error: Error, info: React.ErrorInfo) {
+    override componentDidCatch(error: Error, info: React.ErrorInfo) {
         console.error("ErrorBoundary caught:", error, info)
         // plug in Sentry or similar here in production
     }
 
-    render() {
+    override render() {
         if (this.state.hasError) {
             return this.props.fallback || (
                 <div className="flex flex-col items-center justify-center h-screen gap-4">

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import { useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '../../../State/store'
 import { fetchUserOrderHistory } from '../../../State/customer/orderSlice'
 import OrdaItem from './OrdaItem'

@@ -1,7 +1,6 @@
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { Wishlist, WishlistState } from "../../types/wishlistType";
 import { api } from "../../config/Api";
-import { number } from "yup";
 
 const initialState: WishlistState = {
     wishlist: null,

@@ -1,11 +1,10 @@
 import { Button, Divider, FormControl, FormControlLabel, FormLabel, Radio, RadioGroup } from '@mui/material'
 import { teal } from '@mui/material/colors'
-import React, { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { colors } from '../../../Data/Filter/color'
 import { useSearchParams } from 'react-router-dom'
 import { discount } from '../../../Data/Filter/discount'
 import { price } from '../../../Data/Filter/price'
-import { fetchAllProducts } from '../../../State/customer/ProductSlice'
 
 
 

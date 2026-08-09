@@ -1,4 +1,3 @@
-import React from 'react'
 import { HomeCategory } from '../../../../types/HomeCategoryType'
 
 const AllCategory = ({ item }: { item: HomeCategory }) => {

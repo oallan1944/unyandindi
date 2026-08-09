@@ -1,4 +1,3 @@
-import React from 'react'
 import ImageTextGrid from './ImageTextGrid'
 import HomeEssentialCard from './HomeEssentialCard'
 

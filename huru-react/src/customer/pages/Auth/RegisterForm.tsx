@@ -1,6 +1,5 @@
 import { useFormik } from 'formik'
-import React, { useState } from 'react'
-
+import { useState } from 'react';
 import { useAppDispatch } from '../../../State/store'
 import { Button, TextField } from '@mui/material'
 import { sendLoginSignupOtp, signup } from '../../../State/authSlice'

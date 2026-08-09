@@ -1,5 +1,5 @@
 import { Button, FormControl, InputLabel, MenuItem, Paper, Select, styled, Table, TableBody, TableCell, tableCellClasses, TableContainer, TableHead, TableRow } from '@mui/material'
-import React, { useState } from 'react'
+import { useState } from 'react'
 
 const accountStatuses = [
     { status: 'PENDING_VERIFICATION', title: 'Active', description: 'Account is pending verifivation' },

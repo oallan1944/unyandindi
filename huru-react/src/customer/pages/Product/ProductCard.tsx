@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react';
 import './ProductCard.css'
 import { Button } from '@mui/material'
 import { Favorite, ModeComment } from '@mui/icons-material'

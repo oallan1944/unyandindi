@@ -1,4 +1,3 @@
-import React from 'react'
 import { HomeCategory } from '../../../../types/HomeCategoryType'
 import { Button } from '@mui/material'
 

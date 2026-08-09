@@ -1,0 +1,22 @@
+.hero-dots {
+  bottom: 14px !important;
+  left: auto !important;
+  right: 20px !important;
+  width: auto !important;
+  display: flex !important;
+  gap: 6px;
+}
+.hero-dots li {
+  width: auto;
+  height: auto;
+  margin: 0;
+}
+.hero-dots li button:before {
+  font-size: 8px;
+  color: white;
+  opacity: 0.5;
+}
+.hero-dots li.slick-active button:before {
+  opacity: 1;
+  color: #f2a93b;
+}

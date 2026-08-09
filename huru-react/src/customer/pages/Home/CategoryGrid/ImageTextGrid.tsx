@@ -1,6 +1,5 @@
 import { motion } from "framer-motion";
-import React, { useEffect, useState } from "react";
-
+import { useEffect, useState } from 'react';
 const ImageTextGrid = () => {
     const images = [
         "/Assets/electricAssets/macbook.png",

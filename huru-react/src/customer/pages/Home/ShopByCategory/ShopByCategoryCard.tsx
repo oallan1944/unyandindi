@@ -1,4 +1,3 @@
-import React from 'react'
 import './ShopByCategory.css'
 import { HomeCategory } from '../../../../types/HomeCategoryType'
 

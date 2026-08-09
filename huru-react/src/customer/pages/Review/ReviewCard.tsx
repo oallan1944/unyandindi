@@ -2,8 +2,6 @@ import { Delete } from '@mui/icons-material'
 import { Avatar, Box, Grid, IconButton, Rating } from '@mui/material'
 import { red } from '@mui/material/colors'
 
-import React from 'react'
-
 const ReviewCard = () => {
     return (
         <div className='flex justify-between gap-2 '>

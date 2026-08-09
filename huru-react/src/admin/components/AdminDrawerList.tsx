@@ -1,4 +1,3 @@
-import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import DrawerList from '../../component/DrawerList'
 import { useAppDispatch, useAppSelector } from '../../State/store'

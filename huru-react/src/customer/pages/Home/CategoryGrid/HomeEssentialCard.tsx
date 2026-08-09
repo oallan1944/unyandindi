@@ -1,6 +1,4 @@
 import { Button } from '@mui/material'
-import React from 'react'
-
 const HomeEssentialCard = () => {
     const items = [
         { src: '/Assets/home/fridge.jpg', name: 'Fridge' },

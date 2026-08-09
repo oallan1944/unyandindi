@@ -1,5 +1,5 @@
 // src/components/AsyncStateWrapper.tsx
-import React, { ReactNode } from 'react'
+import { ReactNode } from 'react'
 import { CircularProgress, Button } from '@mui/material'
 
 interface Props {

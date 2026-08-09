@@ -1,4 +1,3 @@
-import React from 'react'
 import { Product } from '../../types/productType'
 import { Button } from '@mui/material'
 import { Close } from '@mui/icons-material'

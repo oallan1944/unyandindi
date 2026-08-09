@@ -1,6 +1,6 @@
 
 import { Box, Button, Divider } from '@mui/material'
-import React, { useEffect } from 'react'
+import { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom'
 import OrderStepper from './OrderStepper'
 import PaymentsIcon from '@mui/icons-material/Payments';

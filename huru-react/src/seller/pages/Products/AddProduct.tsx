@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react';
 import { menLevelTwo } from '../../../Data/Category/Level two/menLevelTwo'
 import { womenLevelTwo } from '../../../Data/Category/Level two/womenLevelTwo'
 import { furnitureLevelTwo } from '../../../Data/Category/Level two/furnitureLevelTwo'

@@ -1,5 +1,4 @@
-// import React from 'react'
-// import { HomeCategory } from '../../../../types/HomeCategoryType'
+// // import { HomeCategory } from '../../../../types/HomeCategoryType'
 
 // const ElectricCategoryCard = ({ item }: { item: HomeCategory }) => {
 //   return (

@@ -1,5 +1,4 @@
 import { Divider } from '@mui/material'
-import React from 'react'
 
 const ProfileFieldCard = ({ keys, value }: { keys: string, value: string }) => {
     return (

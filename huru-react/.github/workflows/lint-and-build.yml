@@ -1,0 +1,32 @@
+name: Lint & Build
+
+on:
+  pull_request:
+  push:
+    branches: [main, develop]
+
+jobs:
+  lint-budget:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run lint:report
+      - run: node scripts/check-lint-budget.js
+
+  build:
+    runs-on: ubuntu-latest
+    needs: lint-budget
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Production build (CI=false — warnings do not block, only tsc/type errors do)
+        run: npm run build

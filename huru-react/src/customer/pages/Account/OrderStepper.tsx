@@ -1,5 +1,5 @@
 import { Box } from '@mui/material';
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react';
 import CheckCircleIcon from "@mui/icons-material/CheckCircle"
 import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
 

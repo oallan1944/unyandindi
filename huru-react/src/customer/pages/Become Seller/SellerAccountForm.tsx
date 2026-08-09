@@ -1,5 +1,5 @@
 import { Button, Step, StepLabel, Stepper } from '@mui/material'
-import React, { useState } from 'react'
+import { useState } from 'react';
 import BecomeSellerFormStep1 from './BecomeSellerFormStep1'
 import { useFormik } from 'formik'
 import BecomeSellerFormStep2 from './BecomeSellerFormStep2'

@@ -1,6 +1,5 @@
 import { Divider } from '@mui/material'
-import React from 'react'
-import Cart from './Cart'
+// import React from 'react'
 import { useAppSelector } from '../../../State/store'
 
 

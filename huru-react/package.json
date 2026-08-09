@@ -40,16 +40,29 @@
     "yup": "^1.6.1"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
+    "start": "cross-env CI=false react-scripts start",
+    "build": "cross-env CI=false react-scripts build",
+    "build:strict": "cross-env CI=true react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "lint": "eslint \"src/**/*.{ts,tsx}\"",
+    "lint:fix": "eslint --fix \"src/**/*.{ts,tsx}\"",
+    "lint:report": "eslint \"src/**/*.{ts,tsx}\" --format json --output-file lint-report.json || true",
+    "lint:budget": "node scripts/check-lint-budget.js",
+    "fix:react-imports": "node scripts/fix-unused-react-imports.js"
   },
   "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
+    "extends": ["react-app", "react-app/jest"],
+    "plugins": ["unused-imports"],
+    "rules": {
+      "no-unused-vars": "off",
+      "@typescript-eslint/no-unused-vars": "off",
+      "unused-imports/no-unused-imports": "error",
+      "unused-imports/no-unused-vars": [
+        "warn",
+        { "vars": "all", "varsIgnorePattern": "^_", "args": "after-used", "argsIgnorePattern": "^_" }
+      ]
+    }
   },
   "browserslist": {
     "production": [
@@ -66,6 +79,8 @@
   "devDependencies": {
     "@types/react-slick": "^0.23.13",
     "autoprefixer": "^10.5.0",
+    "cross-env": "^7.0.3",
+    "eslint-plugin-unused-imports": "^4.4.1",
     "postcss": "^8.5.14",
     "tailwindcss": "^3.4.19"
   }

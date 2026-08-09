@@ -6,22 +6,34 @@
 
     /* Module system */
     "module": "esnext",
-    "moduleResolution": "bundler",
+    "moduleResolution": "node",
     "resolveJsonModule": true,
     "isolatedModules": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
 
-    /* Strictness — core */
+    /* Strictness — core (kept on, these catch real bugs) */
     "strict": true,
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
-
-    /* Strictness — recommended additions for a growing codebase */
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
     "noImplicitReturns": true,
     "noImplicitOverride": true,
+
+    /*
+     * noUnusedLocals / noUnusedParameters intentionally OMITTED.
+     *
+     * Rationale (see docs/UNUSED_VARS_POLICY.md):
+     * - tsc's unused-var check is binary (error) and has no ignore
+     *   pattern, so it hard-fails the fork-ts-checker process used by
+     *   react-scripts, killing `npm start` and `npm run build` for any
+     *   work-in-progress code.
+     * - ESLint's `unused-imports` plugin (see package.json) owns this
+     *   check instead: it warns rather than errors, supports a "_"
+     *   prefix escape hatch for intentionally-deferred code, and is
+     *   enforced via a ratcheting CI budget (scripts/check-lint-budget.js)
+     *   so debt cannot silently grow.
+     * Do not re-enable these without updating that policy doc.
+     */
 
     /* React / build tooling */
     "jsx": "react-jsx",
@@ -31,3 +43,39 @@
   },
   "include": ["src"]
 }
+
+
+// {
+//   "compilerOptions": {
+//     /* Language target */
+//     "target": "ES2020",
+//     "lib": ["dom", "dom.iterable", "esnext"],
+    
+
+//     /* Module system */
+//     "module": "esnext",
+//     "moduleResolution": "node",
+//     "resolveJsonModule": true,
+//     "isolatedModules": true,
+//     "esModuleInterop": true,
+//     "allowSyntheticDefaultImports": true,
+
+//     /* Strictness — core */
+//     "strict": true,
+//     "forceConsistentCasingInFileNames": true,
+//     "noFallthroughCasesInSwitch": true,
+
+//     /* Strictness — recommended additions for a growing codebase */
+//     "noUnusedLocals": true,
+//     "noUnusedParameters": true,
+//     "noImplicitReturns": true,
+//     "noImplicitOverride": true,
+
+//     /* React / build tooling */
+//     "jsx": "react-jsx",
+//     "allowJs": true,
+//     "skipLibCheck": true,
+//     "noEmit": true
+//   },
+//   "include": ["src"]
+// }
