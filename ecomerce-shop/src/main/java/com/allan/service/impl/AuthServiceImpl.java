@@ -19,6 +19,11 @@ import org.springframework.transaction.annotation.Transactional;
 import com.allan.config.JwtProvider;
 import com.allan.domain.AuthProvider;
 import com.allan.domain.USER_ROLE;
+import com.allan.exceptions.GoogleOnlyAccountException;
+import com.allan.exceptions.InvalidOtpException;
+import com.allan.exceptions.OtpExpiredException;
+import com.allan.exceptions.ResourceNotFoundException;
+import com.allan.exceptions.TooManyAttemptsException;
 import com.allan.model.Admin;
 import com.allan.model.Cart;
 import com.allan.model.Seller;
@@ -44,6 +49,9 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
 
+    private static final int OTP_VALIDITY_MINUTES = 5;
+    private static final int MAX_OTP_ATTEMPTS = 5;
+
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final CartRepository cartRepository;
@@ -62,15 +70,8 @@ public class AuthServiceImpl implements AuthService {
     @Transactional
     public String createUser(SignupRequest req) throws Exception {
 
-        VerificationCode verificationCode = verificationCodeRepository
-                .findByEmail(req.getEmail())
-                .orElse(null);
-
-        if (verificationCode == null
-                || !verificationCode.getOtp().equals(req.getOtp())) {
-            log.warn("Signup OTP mismatch for email: {}", req.getEmail());
-            throw new Exception("Wrong OTP.");
-        }
+        VerificationCode verificationCode = latestVerificationCode(req.getEmail());
+        validateOtp(verificationCode, req.getOtp(), req.getEmail());
 
         User user = userRepository.findByEmail(req.getEmail());
         if (user == null) {
@@ -98,10 +99,10 @@ public class AuthServiceImpl implements AuthService {
             cart.setUser(user);
             cartRepository.save(cart);
 
-            log.info("New LOCAL user created: {}", user.getEmail());
+            log.info("New LOCAL user created: {}", mask(user.getEmail()));
         }
 
-        verificationCodeRepository.delete(verificationCode);
+        verificationCodeRepository.deleteAllByEmail(req.getEmail());
 
         List<GrantedAuthority> authorities = new ArrayList<>();
         authorities.add(new SimpleGrantedAuthority(
@@ -127,23 +128,26 @@ public class AuthServiceImpl implements AuthService {
         if (email.startsWith(SIGNING_PREFIX)) {
             email = email.substring(SIGNING_PREFIX.length());
 
-            if (role.equals(USER_ROLE.ROLE_SELLER)) {
+            // Enum-first comparison: safe even when role is null, instead
+            // of role.equals(...) which threw NullPointerException (and
+            // therefore a raw 500) for any caller that omitted role.
+            if (USER_ROLE.ROLE_SELLER.equals(role)) {
                 Seller seller = sellerRepository.findByEmail(email);
                 if (seller == null) {
-                    throw new Exception(
-                            "Seller not found for email: " + email);
+                    throw new ResourceNotFoundException(
+                            "No seller account found for this email.");
                 }
-            } else if (role.equals(USER_ROLE.ROLE_ADMIN)) {
+            } else if (USER_ROLE.ROLE_ADMIN.equals(role)) {
                 Admin admin = adminRepository.findByEmail(email);
                 if (admin == null) {
-                    throw new Exception(
-                            "Admin not found for email: " + email);
+                    throw new ResourceNotFoundException(
+                            "No admin account found for this email.");
                 }
             } else {
                 User user = userRepository.findByEmail(email);
                 if (user == null) {
-                    throw new Exception(
-                            "User not found for email: " + email);
+                    throw new ResourceNotFoundException(
+                            "No account found for this email.");
                 }
 
                 // ✅ Google-primary users with otpEnabled=true can use OTP
@@ -153,21 +157,28 @@ public class AuthServiceImpl implements AuthService {
             }
         }
 
-        verificationCodeRepository.findByEmail(email)
-                .ifPresent(verificationCodeRepository::delete);
+        // Bulk delete — cannot throw NonUniqueResultException on multiple
+        // matching rows, unlike the previous find-then-delete pattern.
+        verificationCodeRepository.deleteAllByEmail(email);
 
         String otp = OtpUtil.generateOtp();
+        LocalDateTime now = LocalDateTime.now();
+
         VerificationCode verificationCode = new VerificationCode();
         verificationCode.setOtp(otp);
         verificationCode.setEmail(email);
+        verificationCode.setCreatedAt(now);
+        verificationCode.setExpiresAt(now.plusMinutes(OTP_VALIDITY_MINUTES));
+        verificationCode.setAttempts(0);
         verificationCodeRepository.save(verificationCode);
 
-        String subject = "Huru Bazar Login/Signup OTP";
+        String subject = "Huru Login/Signup OTP";
         String text = "Your Login/Signup OTP is: " + otp
+                + "\nThis code expires in " + OTP_VALIDITY_MINUTES + " minutes."
                 + "\nPlease do not share this OTP with anyone.";
         emailService.sendVerificationOtpEmail(email, otp, subject, text);
 
-        log.info("OTP sent to: {}", email);
+        log.info("OTP sent to: {}", mask(email));
     }
 
     // ─────────────────────────────────────────────
@@ -175,6 +186,7 @@ public class AuthServiceImpl implements AuthService {
     // ─────────────────────────────────────────────
 
     @Override
+    @Transactional
     public AuthResponse signing(LoginRequest req) throws Exception {
         String username = req.getEmail();
         String otp = req.getOtp();
@@ -195,7 +207,7 @@ public class AuthServiceImpl implements AuthService {
         authResponse.setMessage("Login successful.");
         authResponse.setRole(USER_ROLE.valueOf(roleName));
 
-        log.info("User logged in: {}", username);
+        log.info("User logged in: {}", mask(username));
         return authResponse;
     }
 
@@ -216,45 +228,99 @@ public class AuthServiceImpl implements AuthService {
         String emailForOtpLookup = username;
 
         if (username.startsWith(SELLER_PREFIX)) {
-            emailForOtpLookup =
-                    username.substring(SELLER_PREFIX.length());
+            emailForOtpLookup = username.substring(SELLER_PREFIX.length());
 
-            Seller seller =
-                    sellerRepository.findByEmail(emailForOtpLookup);
+            Seller seller = sellerRepository.findByEmail(emailForOtpLookup);
             if (seller == null) {
-                throw new Exception(
-                        "Seller not found for email: " + emailForOtpLookup);
+                throw new ResourceNotFoundException(
+                        "No seller account found for this email.");
             }
         }
 
         // ✅ Google-only guard — if the loaded UserDetails has the
         // sentinel password set by CustomUserServiceImpl for Google-only
         // accounts, reject OTP login immediately with a clear message.
-        // This prevents the OTP flow from being used to access an account
-        // that was created via Google and has never set up OTP.
-        if ("{noop}GOOGLE_ONLY_NO_OTP".equals(
-                userDetails.getPassword())) {
-            throw new Exception(
-                    "This account uses Google sign-in. "
-                    + "Please sign in with Google instead.");
+        if ("{noop}GOOGLE_ONLY_NO_OTP".equals(userDetails.getPassword())) {
+            throw new GoogleOnlyAccountException(
+                    "This account uses Google sign-in. Please sign in with Google instead.");
         }
 
-        VerificationCode verificationCode = verificationCodeRepository
-                .findByEmail(emailForOtpLookup)
-                .orElse(null);
+        VerificationCode verificationCode = latestVerificationCode(emailForOtpLookup);
+        validateOtp(verificationCode, otp, emailForOtpLookup);
 
-        log.info("Username = {}", username);
-        log.info("Email used for OTP lookup = {}", emailForOtpLookup);
-
-        if (verificationCode == null
-                || !verificationCode.getOtp().equals(otp)) {
-            log.warn("OTP mismatch for: {}", emailForOtpLookup);
-            throw new Exception("OTP does not match.");
-        }
-
-        verificationCodeRepository.delete(verificationCode);
+        verificationCodeRepository.deleteAllByEmail(emailForOtpLookup);
 
         return new UsernamePasswordAuthenticationToken(
                 userDetails, null, userDetails.getAuthorities());
+    }
+
+    // ─────────────────────────────────────────────
+    // Shared OTP validation helpers
+    // ─────────────────────────────────────────────
+
+    /**
+     * Fetches the most recent VerificationCode for an email. Uses
+     * findAllByEmailOrderByIdDesc rather than findByEmail so a stray
+     * duplicate row (which should no longer be possible once the unique
+     * constraint migration has run) degrades to "use the newest one"
+     * instead of throwing NonUniqueResultException.
+     */
+    private VerificationCode latestVerificationCode(String email) {
+        return verificationCodeRepository
+                .findAllByEmailOrderByIdDesc(email)
+                .stream()
+                .findFirst()
+                .orElse(null);
+    }
+
+    /**
+     * Validates an OTP against a VerificationCode record: existence,
+     * expiry, and match — enforcing a server-side attempt lockout that
+     * cannot be bypassed by a client (e.g. direct API calls via Postman)
+     * skipping the frontend's own rate limiting.
+     */
+    private void validateOtp(VerificationCode verificationCode, String otp, String email)
+            throws InvalidOtpException, OtpExpiredException, TooManyAttemptsException {
+
+        if (verificationCode == null) {
+            throw new InvalidOtpException("No OTP request found for this email. Please request a new OTP.");
+        }
+
+        if (verificationCode.getExpiresAt() != null
+                && verificationCode.getExpiresAt().isBefore(LocalDateTime.now())) {
+            verificationCodeRepository.deleteAllByEmail(email);
+            log.warn("Expired OTP attempted for: {}", mask(email));
+            throw new OtpExpiredException("This OTP has expired. Please request a new one.");
+        }
+
+        if (!verificationCode.getOtp().equals(otp)) {
+            int attempts = verificationCode.getAttempts() + 1;
+
+            if (attempts >= MAX_OTP_ATTEMPTS) {
+                verificationCodeRepository.deleteAllByEmail(email);
+                log.warn("OTP attempt lockout triggered for: {}", mask(email));
+                throw new TooManyAttemptsException(
+                        "Too many failed attempts. Please request a new OTP.");
+            }
+
+            verificationCode.setAttempts(attempts);
+            verificationCodeRepository.save(verificationCode);
+
+            log.warn("OTP mismatch for: {} ({} attempt(s) remaining)",
+                    mask(email), MAX_OTP_ATTEMPTS - attempts);
+            throw new InvalidOtpException(
+                    "Incorrect OTP. " + (MAX_OTP_ATTEMPTS - attempts) + " attempt(s) remaining.");
+        }
+    }
+
+    /**
+     * Masks an email for logging — e.g. "j***n@gmail.com" — so full
+     * addresses don't sit in plaintext application logs.
+     */
+    private String mask(String email) {
+        if (email == null) return null;
+        int at = email.indexOf('@');
+        if (at <= 1) return "***" + email.substring(Math.max(at, 0));
+        return email.charAt(0) + "***" + email.substring(at - 1);
     }
 }

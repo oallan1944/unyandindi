@@ -7,7 +7,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.allan.domain.USER_ROLE;
 import com.allan.model.User;
-import com.allan.model.VerificationCode;
 import com.allan.repository.UserRepository;
 import com.allan.request.LoginOtpRequest;
 import com.allan.request.LoginRequest;
@@ -60,14 +59,10 @@ public class AuthController {
 
     @PostMapping("/signing")
     // added throw Exception
-    public ResponseEntity<AuthResponse> loginHandler(@RequestBody VerificationCode req)
+    public ResponseEntity<AuthResponse> loginHandler(@RequestBody LoginRequest req)
             throws Exception {
 
-        LoginRequest loginRequest = new LoginRequest();
-        loginRequest.setEmail(req.getEmail());
-        loginRequest.setOtp(req.getOtp());
-
-        AuthResponse authResponse = authService.signing(loginRequest);
+        AuthResponse authResponse = authService.signing(req);
 
         return ResponseEntity.ok(authResponse);
     }
