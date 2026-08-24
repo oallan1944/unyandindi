@@ -1,15 +1,16 @@
 import { useState, useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '../../../State/store';
 import { useFormik } from 'formik';
-import { Button, CircularProgress, TextField, InputAdornment } from '@mui/material';
+import { Button, CircularProgress, TextField, InputAdornment, Divider, Typography } from '@mui/material';
 import { getRoleFromToken } from '../../../Util/jwtHelpers';
 import { fetchUserProfile, sendLoginSignupOtp, signin } from '../../../State/authSlice';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import * as Yup from 'yup';
 import { toast } from 'react-toastify';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle } from 'lucide-react';
 import ResendOtpButton from '../../../component/common/ResendOtpButton';
+import GoogleAuthButton from './GoogleAuthButton';
 
 const emailSchema = Yup.object({
     email: Yup.string().email('Invalid email format').required('Email is required'),
@@ -20,10 +21,26 @@ const loginSchema = Yup.object({
     otp: Yup.string().required('OTP is required'),
 });
 
+// Maps the typed error codes sent by OAuth2AuthenticationFailureHandler
+// (backend) to a user-facing message. Keep in sync with
+// extractErrorCode() in that class — a new backend error code that
+// isn't added here silently falls through to the generic message,
+// which is safe but less helpful than it could be.
+const OAUTH_ERROR_MESSAGES: Record<string, string> = {
+    unverified_email: 'Your Google account email is not verified. Please verify it with Google first.',
+    non_customer_account: 'This email is registered as a seller or admin account. Please sign in with OTP instead.',
+    missing_email: "Google didn't share an email address with us. Please try a different Google account.",
+    missing_google_id: 'Google sign-in failed to return a valid account identifier. Please try again.',
+    provider_mismatch: 'This account uses a different sign-in method.',
+    user_not_found: "We couldn't find your account after signing in with Google. Please try again.",
+    oauth2_error: 'Google sign-in failed. Please try again or use OTP login.',
+};
+
 const LoginForm = () => {
     const navigate = useNavigate();
     const dispatch = useAppDispatch();
     const { auth } = useAppSelector((store) => store);
+    const [searchParams, setSearchParams] = useSearchParams();
 
     const [isOtpSent, setIsOtpSent] = useState(false);
     const [resendTimer, setResendTimer] = useState(0);
@@ -81,9 +98,30 @@ const LoginForm = () => {
         }
     }, [auth.jwt, dispatch, navigate]);
 
+    // Handles ?error=<code> appended by OAuth2AuthenticationFailureHandler
+    // when Google sign-in fails (unverified email, non-customer account,
+    // etc.). Shows a mapped message, then strips the param so a page
+    // refresh doesn't re-show the toast.
+    useEffect(() => {
+        const errorCode = searchParams.get('error');
+        if (errorCode) {
+            toast.error(OAUTH_ERROR_MESSAGES[errorCode] || OAUTH_ERROR_MESSAGES.oauth2_error);
+            const next = new URLSearchParams(searchParams);
+            next.delete('error');
+            setSearchParams(next, { replace: true });
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [searchParams]);
+
     return (
         <div className="max-w-sm mx-auto p-6 space-y-6 border rounded shadow">
             <h1 className="text-center font-bold text-2xl text-primary-color pb-4">User Login</h1>
+
+            <GoogleAuthButton />
+
+            <Divider>
+                <Typography variant="body2" color="text.secondary">OR</Typography>
+            </Divider>
 
             <form onSubmit={formik.handleSubmit} className="space-y-5">
                 <TextField

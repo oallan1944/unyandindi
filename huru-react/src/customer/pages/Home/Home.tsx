@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
-import Deal from './Deal/Deal'
 import ShopByCategory from './ShopByCategory/ShopByCategory'
+import DealCategories from './Deal/DealCategories'
 import Button from '@mui/material/Button'
 import { Storefront } from '@mui/icons-material'
 import { useNavigate } from 'react-router-dom'
@@ -10,6 +10,7 @@ import HeroSlider from './ElectricCategory/HeroSlider'
 import { useAppDispatch, useAppSelector } from '../../../State/store'
 import { fetchHomePageData } from '../../../State/customer/customerSlice'
 import ErrorBoundary from '../../../component/ErrorBoundary'
+
 
 
 
@@ -43,12 +44,10 @@ useEffect(() => {
 
           <ErrorBoundary>
         <section className='px-2 lg:px-4'>
+          {/* <ElectricCategory1 /> */}
           <HeroSlider />
         </section>
         </ErrorBoundary>
-        {/* <ErrorBoundary>
-         <Deal />
-        </ErrorBoundary> */}
           <ErrorBoundary>
         <section>
 
@@ -84,7 +83,7 @@ useEffect(() => {
 
           </div>
 
-          <Deal />
+          <DealCategories />
         </div>
         </ErrorBoundary>
 
@@ -122,8 +121,7 @@ useEffect(() => {
             className='w-full h-full'
             src="https://images.pexels.com/photos/5712970/pexels-photo-5712970.jpeg?auto=compress&cs=tinysrgb&w=600" alt="" />
 
-          <div className='absolute top-1/3 left-4 lg:left-[15rem] transform-translate
-          -y-1/2 font-semibold lg:text-4xl space-y-3'>
+          <div className='absolute top-1/3 left-4 lg:left-[15rem] -translate-y-1/2 font-semibold lg:text-4xl space-y-3'>
             <h1>Sell your Product</h1>
             <p className='text-lg md:text-2xl'>With <span className='logo'>Huru Market</span> </p>
 
@@ -143,7 +141,14 @@ useEffect(() => {
 
 export default Home
 
-// import React, { useEffect } from 'react'
+
+
+
+
+
+
+
+// import { useEffect } from 'react'
 // import Deal from './Deal/Deal'
 // import ShopByCategory from './ShopByCategory/ShopByCategory'
 // import Button from '@mui/material/Button'
@@ -151,10 +156,11 @@ export default Home
 // import { useNavigate } from 'react-router-dom'
 // import CategoryGrid2 from './CategoryGrid/CategoryGrid2'
 // import CountdownTimer from '../../../hooks/CountdownTimer'
-// import ElectricCategory1 from './ElectricCategory/ElectricCategory1'
+// import HeroSlider from './ElectricCategory/HeroSlider'
 // import { useAppDispatch, useAppSelector } from '../../../State/store'
 // import { fetchHomePageData } from '../../../State/customer/customerSlice'
 // import ErrorBoundary from '../../../component/ErrorBoundary'
+
 
 
 
@@ -187,10 +193,9 @@ export default Home
 //         className='space-y-1 lg:space-y-2 relative pb-3'>
 
 //           <ErrorBoundary>
-//         <section className=''>
-//           <index/>
+//         <section className='px-2 lg:px-4'>
 //           {/* <ElectricCategory1 /> */}
-//           {/* <ElectricCategory /> */}
+//           <HeroSlider />
 //         </section>
 //         </ErrorBoundary>
 //         {/* <ErrorBoundary>
@@ -289,3 +294,5 @@ export default Home
 // }
 
 // export default Home
+
+

@@ -50,9 +50,16 @@ public class Order {
     @Embedded
     private PaymentDetails paymentDetails = new PaymentDetails();
 
-    private double totalMrpPrice;
+    // Widened to long: was `double` here specifically, while
+    // totalSellingPrice was Integer — mixing floating-point and integer
+    // types for the same kind of money field risks silent rounding drift
+    // on top of the UGX overflow risk that applies everywhere else these
+    // prices flow through (Product, CartItem, this aggregation in
+    // OrderServiceImpl). No currency amount in this app should be a
+    // double — there's no fractional-shilling use case to justify it.
+    private long totalMrpPrice;
 
-    private Integer totalSellingPrice;
+    private Long totalSellingPrice;
 
     private Integer discount;
 

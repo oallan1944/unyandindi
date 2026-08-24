@@ -1,10 +1,9 @@
-import { Button, Divider, FormControl, FormControlLabel, FormLabel, Radio, RadioGroup } from '@mui/material'
+import { Button, Divider, FormControl, FormControlLabel, FormLabel, Radio, RadioGroup, TextField } from '@mui/material'
 import { teal } from '@mui/material/colors'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { colors } from '../../../Data/Filter/color'
 import { useSearchParams } from 'react-router-dom'
 import { discount } from '../../../Data/Filter/discount'
-import { price } from '../../../Data/Filter/price'
 
 
 
@@ -12,7 +11,16 @@ const FilterSection: React.FC = () => {
     const [expandColor, setExpandColor] = useState(false);
     const [searchParams, setSearchPrams] = useSearchParams();
 
+    // Free-form min/max price inputs, seeded from the URL so the fields
+    // survive a refresh or a shared link.
+    const [minPrice, setMinPrice] = useState(searchParams.get("price")?.split("-")[0] ?? "");
+    const [maxPrice, setMaxPrice] = useState(searchParams.get("price")?.split("-")[1] ?? "");
 
+    useEffect(() => {
+        // Keep the inputs in sync if the filter is cleared/changed elsewhere (e.g. "clear all")
+        setMinPrice(searchParams.get("price")?.split("-")[0] ?? "");
+        setMaxPrice(searchParams.get("price")?.split("-")[1] ?? "");
+    }, [searchParams.get("price")]);
 
     const handleColorToggle = () => {
         setExpandColor(!expandColor);
@@ -24,6 +32,19 @@ const FilterSection: React.FC = () => {
         } else {
             searchParams.delete(name);
         }
+        setSearchPrams(searchParams);
+    };
+
+    const applyPriceFilter = () => {
+        // Both blank -> clear the filter entirely.
+        if (!minPrice && !maxPrice) {
+            searchParams.delete("price");
+            setSearchPrams(searchParams);
+            return;
+        }
+        // Encoded as "min-max"; an omitted side is left blank and read as
+        // open-ended (Product.tsx treats an empty maxStr as "no upper bound").
+        searchParams.set("price", `${minPrice || 0}-${maxPrice || ""}`);
         setSearchPrams(searchParams);
     };
     // const filteredProducts = items.filter((item) => {
@@ -81,7 +102,7 @@ const FilterSection: React.FC = () => {
                             onChange={updateFilterParams}
                         >
                             {colors.slice(0, expandColor ? colors.length : 5).map((item) => <FormControlLabel
-                                value={item.name} control={<Radio />}
+                                 value={item.name} control={<Radio />}
                                 label={<div className='flex items-center gap-3'>
                                     <p>{item.name}</p>
                                     <p style={{ backgroundColor: item.hex }}
@@ -113,22 +134,36 @@ const FilterSection: React.FC = () => {
                         >
                             Price
                         </FormLabel>
-                        <RadioGroup
-                            name='price'
-                            onChange={updateFilterParams}
-                            aria-labelledby='price'
-                            // defaultValue=""
-                            value={searchParams.get("price") || ""}
+                        <div className='flex items-center gap-2'>
+                            <TextField
+                                size='small'
+                                type='number'
+                                label='Min'
+                                value={minPrice}
+                                onChange={(e) => setMinPrice(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && applyPriceFilter()}
+                                inputProps={{ min: 0 }}
+                                sx={{ width: '90px' }}
+                            />
+                            <span>-</span>
+                            <TextField
+                                size='small'
+                                type='number'
+                                label='Max'
+                                value={maxPrice}
+                                onChange={(e) => setMaxPrice(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && applyPriceFilter()}
+                                inputProps={{ min: 0 }}
+                                sx={{ width: '90px' }}
+                            />
+                        </div>
+                        <Button
+                            onClick={applyPriceFilter}
+                            size='small'
+                            className='text bg-teal-600 cursor-pointer font-semibold w-fit mt-2'
                         >
-                            {price.map((item, index) => (
-                                <FormControlLabel
-                                    key={item.name}
-                                    value={item.value}
-                                    control={<Radio size='small' />}
-                                    label={item.name}
-                                />
-                            ))}
-                        </RadioGroup>
+                            Apply
+                        </Button>
                     </FormControl>
                 </section>
                 <Divider />

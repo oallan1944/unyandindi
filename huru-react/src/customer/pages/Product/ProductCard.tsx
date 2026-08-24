@@ -7,6 +7,7 @@ import { Product } from '../../../types/productType'
 import { useNavigate } from 'react-router-dom'
 import { useAppDispatch } from '../../../State/store'
 import { addProductToWishlist } from '../../../State/customer/wishlistSlice'
+import { formatUGX } from '../../../Util/currency'
 
 
 
@@ -82,10 +83,10 @@ const ProductCard = ({ item }: { item: Product }) => {
                     </div>
                     <div className='price flex items-center gap-3'>
                         <span className='font-sans text-gray-800'>
-                            ${item.sellingPrice}
+                            {formatUGX(item.sellingPrice)}
                         </span>
                         <span className='thin-line-through text-gray-500'>
-                            ${item.mrpPrice}
+                            {formatUGX(item.mrpPrice)}
                         </span>
                         <span className='text-primary-color font-semibold'>
                             {item.discountPercent}%

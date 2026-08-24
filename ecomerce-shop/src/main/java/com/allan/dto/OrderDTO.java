@@ -12,8 +12,11 @@ public class OrderDTO {
     private Long id;
     private String orderId;
     private OrderStatus orderStatus;
-    private double totalMrpPrice;
-    private Integer totalSellingPrice;
+    // Widened to match Order.java: was double (totalMrpPrice) and Integer
+    // (totalSellingPrice) — now long/Long consistently, avoiding both the
+    // floating-point-for-money issue and the UGX overflow risk.
+    private long totalMrpPrice;
+    private Long totalSellingPrice;
     private Integer discount;
     private int totalItem;
     private PaymentStatus paymentStatus;

@@ -21,12 +21,7 @@ export const createDeal = createAsyncThunk(
     "deals/createDeal",
     async (deal: any, { rejectWithValue }) => {
         try {
-            const response = await api.post("/admin/deals", deal, {
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${localStorage.getItem("jwt")}`,
-                },
-            });
+            const response = await api.post("/admin/deals", deal);
             console.log("Deal Created", response.data);
             return response.data
         } catch (error: any) {
@@ -40,12 +35,7 @@ export const getAllDeals = createAsyncThunk(
     "deals/getAllDeals",
     async (_, { rejectWithValue }) => {
         try {
-            const response = await api.get("/admin/deals", {
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${localStorage.getItem("jwt")}`,
-                },
-            });
+            const response = await api.get("/admin/deals");
             console.log("get All Deals", response.data);
             return response.data;
         } catch (error: any) {
@@ -60,12 +50,7 @@ export const deleteDeal = createAsyncThunk<ApiResponse, number>(
     "deals/deleteDeal",
     async (id: number, { rejectWithValue }) => {
         try {
-            const response = await api.delete(`/admin/deals/${id}`, {
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${localStorage.getItem("jwt")}`,
-                },
-            });
+            const response = await api.delete(`/admin/deals/${id}`);
             return response.data;
         } catch (error: any) {
             console.log("error", error.response);
@@ -84,12 +69,7 @@ export const updateDeal = createAsyncThunk<
     "deals/updateDeal",
     async ({ id, updatedDeal }, { rejectWithValue }) => {
         try {
-            const response = await api.put(`/admin/deals/${id}`, updatedDeal, {
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${localStorage.getItem("jwt")}`,
-                },
-            });
+            const response = await api.put(`/admin/deals/${id}`, updatedDeal);
             console.log("Deal Updated", response.data);
             return response.data;
         } catch (error: any) {
@@ -179,4 +159,3 @@ const dealSlice = createSlice({
 
 export const { resetDealFlags } = dealSlice.actions;
 export default dealSlice.reducer;
-

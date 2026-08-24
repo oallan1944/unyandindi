@@ -9,6 +9,7 @@ import { api } from "../../../config/Api";
 import { SellerProfileFormValues } from "../../../types/sellerProfileFormValuesType";
 import Card from "../../../component/common/Card"; // 👈 import the new Card component
 import CardActions from "../../../component/common/CardActions";
+import { getToken } from "../../../Util/tokenStorage";
 
 const Profile = () => {
   const [initialValues, setInitialValues] = useState<SellerProfileFormValues | null>(null);
@@ -16,7 +17,7 @@ const Profile = () => {
   const [error, setError] = useState("");
   const [editingCard, setEditingCard] = useState<string | null>(null);
 
-  const token = localStorage.getItem("jwt");
+  const token = getToken();
 
   const fetchProfile = async () => {
     try {

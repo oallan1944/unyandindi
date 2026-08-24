@@ -14,6 +14,7 @@ import { useAppDispatch, useAppSelector } from '../../../State/store';
 import useAddToCart from '../Cart/AddItemToCart';
 import ColorSelect from '../../../component/common/ColorSelect';
 import SizeSelect from '../../../component/common/SizeSelect';
+import { formatUGX } from '../../../Util/currency';
 
 const ProductDetails: React.FC = () => {
     const [quantity, setQuantity] = useState<number>(1);
@@ -114,8 +115,8 @@ const ProductDetails: React.FC = () => {
                     </div>
 
                     <div className='price flex items-center gap-3 mt-5 text-2xl'>
-                        <span className='font-sans text-gray-800'>${product.product?.sellingPrice}</span>
-                        <span className='line-through text-gray-500'>${product.product?.mrpPrice}</span>
+                        <span className='font-sans text-gray-800'>{formatUGX(product.product?.sellingPrice)}</span>
+                        <span className='line-through text-gray-500'>{formatUGX(product.product?.mrpPrice)}</span>
                         <span className='text-primary-color font-semibold'>
                             {product.product?.discountPercent}%
                         </span>

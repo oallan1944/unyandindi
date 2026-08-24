@@ -6,6 +6,7 @@ import OrderStepper from './OrderStepper'
 import PaymentsIcon from '@mui/icons-material/Payments';
 import { useAppDispatch, useAppSelector } from '../../../State/store';
 import { fetchOrderById, fetchOrderItemById } from '../../../State/customer/orderSlice';
+import { getToken } from '../../../Util/tokenStorage';
 
 
 
@@ -16,10 +17,9 @@ const OrderDetails = () => {
 
     const dispatch = useAppDispatch();
     useEffect(() => {
-        dispatch(fetchOrderById({ orderId: Number(orderId), jwt: localStorage.getItem("jwt") || "" }))
+        dispatch(fetchOrderById({ orderId: Number(orderId), jwt: getToken() || "" }))
         dispatch(fetchOrderItemById({
-            orderItemId: Number(orderItemId), jwt: localStorage.getItem
-                ("jwt") || ""
+            orderItemId: Number(orderItemId), jwt: getToken() || ""
         }))
     }, [])
     return (

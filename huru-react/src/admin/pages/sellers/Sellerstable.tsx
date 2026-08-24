@@ -1,76 +1,94 @@
-import { Button, FormControl, InputLabel, MenuItem, Paper, Select, styled, Table, TableBody, TableCell, tableCellClasses, TableContainer, TableHead, TableRow } from '@mui/material'
-import { useState } from 'react'
+import {
+    Alert, Button, Chip, CircularProgress, Dialog, DialogActions, DialogContent,
+    DialogContentText, DialogTitle, FormControl, InputLabel, MenuItem, Paper, Select,
+    Skeleton, styled, Table, TableBody, TableCell, tableCellClasses, TableContainer,
+    TableHead, TableRow,
+} from '@mui/material'
+import { useEffect, useState } from 'react'
+import { useAppDispatch, useAppSelector } from '../../../State/store'
+import {
+    ACCOUNT_STATUSES, AccountStatus, fetchSellers, setStatusFilter, updateSellerStatus,
+} from '../../../State/seller/sellerSlice'
+import { Seller } from '../../../types/sellerType'
 
-const accountStatuses = [
-    { status: 'PENDING_VERIFICATION', title: 'Active', description: 'Account is pending verifivation' },
-    { status: 'ACTIVE', title: 'Pending Verification', description: 'Account is active and in good condition' },
-    { status: 'SUSPENDED', title: 'Suspended', description: 'Account is Temporarily Suspended' },
-    { status: 'DEACTIVATED', title: 'Deactivated', description: 'Account isdeactivated' },
-    { status: 'BANNED', title: 'Banned', description: 'Account is Permanently banned due to violation' },
-    { status: 'CLOSED', title: 'Closed', description: 'Account is permanently closed by owner' },
-];
+const statusTitles: Record<AccountStatus, string> = {
+    PENDING_VERIFICATION: 'Pending Verification',
+    ACTIVE: 'Active',
+    SUSPENDED: 'Suspended',
+    DEACTIVATED: 'Deactivated',
+    BANNED: 'Banned',
+    CLOSED: 'Closed',
+};
+
+const statusColor: Record<AccountStatus, 'default' | 'success' | 'warning' | 'error'> = {
+    PENDING_VERIFICATION: 'warning',
+    ACTIVE: 'success',
+    SUSPENDED: 'warning',
+    DEACTIVATED: 'default',
+    BANNED: 'error',
+    CLOSED: 'default',
+};
+
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
-    [`&.${tableCellClasses.head}`]: {
-        backgroundColor: theme.palette.common.black,
-        color: theme.palette.common.white,
-    },
-    [`&.${tableCellClasses.body}`]: {
-        fontSize: 14,
-    },
+    [`&.${tableCellClasses.head}`]: { backgroundColor: theme.palette.common.black, color: theme.palette.common.white },
+    [`&.${tableCellClasses.body}`]: { fontSize: 14 },
 }));
 
 const StyledTableRow = styled(TableRow)(({ theme }) => ({
-    '&:nth-of-type(odd)': {
-        backgroundColor: theme.palette.action.hover,
-    },
-    // hide last border
-    '&:last-child td, &:last-child th': {
-        border: 0,
-    },
+    '&:nth-of-type(odd)': { backgroundColor: theme.palette.action.hover },
+    '&:last-child td, &:last-child th': { border: 0 },
 }));
 
-function createData(
-    name: string,
-    calories: number,
-    fat: number,
-    carbs: number,
-    protein: number,
-) {
-    return { name, calories, fat, carbs, protein };
-}
-
-const rows = [
-    createData('Frozen yoghurt', 159, 6.0, 24, 4.0),
-    createData('Ice cream sandwich', 237, 9.0, 37, 4.3),
-    createData('Eclair', 262, 16.0, 24, 6.0),
-    createData('Cupcake', 305, 3.7, 67, 4.3),
-    createData('Gingerbread', 356, 16.0, 49, 3.9),
-];
-
 const Sellerstable = () => {
-    const [accountStatus, setAccountStatus] = useState("ACTIVE")
+    const dispatch = useAppDispatch()
+    // Reducer is registered as `seller` (singular) in store.ts's combineReducers.
+    const { sellers, loading, error, statusFilter, updatingId } = useAppSelector(
+        (state) => state.seller
+    )
+    const [pendingChange, setPendingChange] = useState<{ seller: Seller; newStatus: AccountStatus } | null>(null)
 
-    const handleChange = (event: any) => {
-        setAccountStatus(event.target.value)
+    useEffect(() => {
+        dispatch(fetchSellers(statusFilter))
+    }, [dispatch, statusFilter])
+
+    const requestStatusChange = (seller: Seller, newStatus: AccountStatus) => {
+        if (newStatus === seller.accountStatus) return
+        setPendingChange({ seller, newStatus })
     }
+
+    const confirmStatusChange = () => {
+        if (!pendingChange || pendingChange.seller.id === undefined) return
+        dispatch(updateSellerStatus({ sellerId: pendingChange.seller.id, accountStatus: pendingChange.newStatus }))
+        setPendingChange(null)
+    }
+
     return (
         <>
             <div className='pb-5 w-60'>
                 <FormControl fullWidth>
-                    <InputLabel id="demo-simple-select-label">AccountStatus</InputLabel>
+                    <InputLabel id="status-filter-label">Account Status</InputLabel>
                     <Select
-                        labelId="demo-simple-select-label"
-                        id="demo-simple-select"
-                        value={accountStatus}
+                        labelId="status-filter-label"
+                        value={statusFilter}
                         label="Account Status"
-                        onChange={handleChange}
+                        onChange={(e) => dispatch(setStatusFilter(e.target.value))}
                     >
-                        {accountStatuses.map((item) => <MenuItem value={item.status}>{item.title}</MenuItem>)}
+                        <MenuItem value="ALL">All</MenuItem>
+                        {ACCOUNT_STATUSES.map((status) => (
+                            <MenuItem key={status} value={status}>{statusTitles[status]}</MenuItem>
+                        ))}
                     </Select>
                 </FormControl>
             </div>
+
+            {error && (
+                <Alert severity="error" sx={{ mb: 2 }}>
+                    {typeof error === 'string' ? error : 'Something went wrong loading sellers'}
+                </Alert>
+            )}
+
             <TableContainer component={Paper}>
-                <Table sx={{ minWidth: 700 }} aria-label="customized table">
+                <Table sx={{ minWidth: 700 }} aria-label="sellers table">
                     <TableHead>
                         <TableRow>
                             <StyledTableCell>Seller Name</StyledTableCell>
@@ -83,24 +101,74 @@ const Sellerstable = () => {
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {rows.map((row) => (
-                            <StyledTableRow key={row.name}>
-                                <StyledTableCell component="th" scope="row">
-                                    {row.name}
-                                </StyledTableCell>
-                                <StyledTableCell >{row.calories}</StyledTableCell>
-                                <StyledTableCell align="right">{row.fat}</StyledTableCell>
-                                <StyledTableCell align="right">{row.fat}</StyledTableCell>
-                                <StyledTableCell align="right">{row.carbs}</StyledTableCell>
-                                <StyledTableCell align="right">{row.protein}</StyledTableCell>
-                                <StyledTableCell align="right">
-                                    <Button>CHANGE</Button>
-                                </StyledTableCell>
-                            </StyledTableRow>
-                        ))}
+                        {loading && sellers.length === 0 &&
+                            Array.from({ length: 5 }).map((_, i) => (
+                                <TableRow key={i}>
+                                    {Array.from({ length: 7 }).map((__, j) => (
+                                        <StyledTableCell key={j}><Skeleton /></StyledTableCell>
+                                    ))}
+                                </TableRow>
+                            ))}
+
+                        {!loading && sellers.length === 0 && !error && (
+                            <TableRow>
+                                <StyledTableCell colSpan={7} align="center">No sellers found</StyledTableCell>
+                            </TableRow>
+                        )}
+
+                        {sellers.map((seller) => {
+                            const status = (seller.accountStatus ?? 'PENDING_VERIFICATION') as AccountStatus
+                            return (
+                                <StyledTableRow key={seller.id}>
+                                    <StyledTableCell component="th" scope="row">{seller.sellerName}</StyledTableCell>
+                                    <StyledTableCell>{seller.email}</StyledTableCell>
+                                    <StyledTableCell align="right">{seller.mobile}</StyledTableCell>
+                                    <StyledTableCell align="right">{seller.GSTIN}</StyledTableCell>
+                                    <StyledTableCell align="right">{seller.businessDetails?.businessName}</StyledTableCell>
+                                    <StyledTableCell align="right">
+                                        <Chip
+                                            label={statusTitles[status] ?? status}
+                                            color={statusColor[status] ?? 'default'}
+                                            size="small"
+                                        />
+                                    </StyledTableCell>
+                                    <StyledTableCell align="right">
+                                        <FormControl size="small" sx={{ minWidth: 160 }}>
+                                            <Select
+                                                value={status}
+                                                disabled={updatingId === seller.id}
+                                                onChange={(e) => requestStatusChange(seller, e.target.value as AccountStatus)}
+                                            >
+                                                {ACCOUNT_STATUSES.map((s) => (
+                                                    <MenuItem key={s} value={s}>{statusTitles[s]}</MenuItem>
+                                                ))}
+                                            </Select>
+                                        </FormControl>
+                                        {updatingId === seller.id && <CircularProgress size={16} sx={{ ml: 1 }} />}
+                                    </StyledTableCell>
+                                </StyledTableRow>
+                            )
+                        })}
                     </TableBody>
                 </Table>
             </TableContainer>
+
+            <Dialog open={!!pendingChange} onClose={() => setPendingChange(null)}>
+                <DialogTitle>Confirm status change</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        {pendingChange && (
+                            <>Change <strong>{pendingChange.seller.sellerName}</strong>'s status from{' '}
+                            <strong>{pendingChange.seller.accountStatus ?? 'PENDING_VERIFICATION'}</strong> to{' '}
+                            <strong>{pendingChange.newStatus}</strong>? This takes effect immediately.</>
+                        )}
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setPendingChange(null)}>Cancel</Button>
+                    <Button onClick={confirmStatusChange} variant="contained" color="primary">Confirm</Button>
+                </DialogActions>
+            </Dialog>
         </>
     )
 }

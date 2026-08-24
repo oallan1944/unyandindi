@@ -2,12 +2,15 @@ package com.allan.service.impl;
 
 import java.util.Set;
 
+import jakarta.annotation.PostConstruct;
+
 // import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.allan.domain.PaymentOrderStatus;
 import com.allan.domain.PaymentStatus;
+import com.allan.domain.SupportedCurrency;
 import com.allan.model.Order;
 import com.allan.model.PaymentOrder;
 import com.allan.model.User;
@@ -35,11 +38,49 @@ public class PaymentServiceImpl implements PaymentService {
     @Value("${stripe.secret.key}")
     private String stripeSecretKey;
 
-    // @Value("${razorpay.api.key}")
-    // private String apiKey;
+    // Config-driven, not hardcoded — changing the platform's default
+    // currency later is a properties change, not a code change. Defaults
+    // to UGX if the property is omitted, so nothing breaks if you never
+    // set it explicitly.
+    @Value("${app.payment.default-currency:UGX}")
+    private String defaultCurrency;
 
-    // @Value("${razorpay.api.secret}")
-    // private String apiSecret;
+    // Was hardcoded to http://localhost:3000/... — harmless in local dev,
+    // silently broken in any real deployment (customers would get bounced
+    // to a URL that doesn't exist after paying). Same @Value pattern
+    // AdminController already uses for app.frontend.verify-admin-url.
+    @Value("${app.frontend.payment-success-url}")
+    private String paymentSuccessUrlBase;
+
+    @Value("${app.frontend.payment-cancel-url}")
+    private String paymentCancelUrl;
+
+    // Resolved once at startup, not re-parsed on every checkout request —
+    // see validateConfiguredCurrency() below for why this matters.
+    private SupportedCurrency resolvedCurrency;
+
+    /**
+     * Fails application startup if app.payment.default-currency doesn't
+     * match a SupportedCurrency constant, instead of discovering the typo
+     * when a real customer hits checkout and gets an unhandled
+     * IllegalArgumentException mid-payment. A misconfigured currency is a
+     * deployment-time problem, not a runtime-per-request one — this makes
+     * sure it's caught at the point where it's cheap to fix (a failed
+     * deploy) rather than the point where it's expensive (a broken
+     * checkout in production, possibly mid-incident).
+     */
+    @PostConstruct
+    void validateConfiguredCurrency() {
+        try {
+            resolvedCurrency = SupportedCurrency.valueOf(defaultCurrency.trim().toUpperCase());
+        } catch (IllegalArgumentException ex) {
+            throw new IllegalStateException(
+                    "app.payment.default-currency is set to '" + defaultCurrency
+                            + "', which isn't a supported currency. Valid values: "
+                            + java.util.Arrays.toString(SupportedCurrency.values()), ex);
+        }
+    }
+
 
     @Override
     public PaymentOrder createOrder(User user, Set<Order> orders) {
@@ -100,92 +141,33 @@ public class PaymentServiceImpl implements PaymentService {
         return false;
     }
 
-    // @Override
-    // public Boolean proceedPaymentOrder(PaymentOrder paymentOrder, String
-    // paymentId, String paymentLinkId)
-    // throws RazorpayException {
-
-    // if (paymentOrder.getStatus().equals(PaymentOrderStatus.PENDING)) {
-    // RazorpayClient razorpay = new RazorpayClient(apiKey, apiSecret);
-
-    // Payment payment = razorpay.payments.fetch(paymentId);
-
-    // String status = payment.get("status");
-
-    // if (status.equals("captured")) {
-    // Set<Order> orders = paymentOrder.getOrders();
-    // for (Order order : orders) {
-    // order.setPaymentStatus(PaymentStatus.COMPLETED);
-    // orderRepository.save(order);
-    // }
-
-    // paymentOrder.setStatus(PaymentOrderStatus.SUCCESS);
-    // paymentOrderRepository.save(paymentOrder);
-    // return true;
-    // }
-    // paymentOrder.setStatus(PaymentOrderStatus.FAILED);
-    // paymentOrderRepository.save(paymentOrder);
-    // return false;
-    // }
-    // return false;
-    // }
-
-    // @Override
-    // public PaymentLink createRazarPayPaymentLink(User user, Long amount, Long
-    // orderId) throws RazorpayException {
-
-    // amount = amount * 100;
-
-    // try {
-    // RazorpayClient razorpay = new RazorpayClient(apiKey, apiSecret);
-
-    // JSONObject paymentLinkRequest = new JSONObject();
-    // paymentLinkRequest.put("amount", amount);
-    // paymentLinkRequest.put("currency", "USD");
-
-    // JSONObject customer = new JSONObject();
-    // customer.put("name", user.getFullName());
-    // customer.put("email", user.getEmail());
-    // paymentLinkRequest.put("customer", customer);
-
-    // JSONObject notify = new JSONObject();
-    // notify.put("email", true);
-    // paymentLinkRequest.put("notify", notify);
-
-    // paymentLinkRequest.put("callback_url",
-    // "http://localhost:3000/payment-success/" + orderId);
-    // paymentLinkRequest.put("callback_method", "get");
-
-    // PaymentLink paymentLink = razorpay.paymentLink.create(paymentLinkRequest);
-
-    // String paymentLinkUrl = paymentLink.get("short_url");
-    // String paymentLinkId = paymentLink.get("id");
-
-    // return paymentLink;
-
-    // } catch (Exception e) {
-    // System.out.println(e.getMessage());
-    // throw new RazorpayException(e.getMessage());
-    // }
-
-    // }
-
-    // repalce with ai code
-
-    @Override
+@Override
     public String createStripePaymentLink(User user, Long amount, Long orderId) throws StripeException {
+        // Fail with a clear, specific error before ever calling Stripe's API,
+        // rather than letting Stripe reject a null/zero/negative amount with
+        // a less obvious error, or — worse — silently accepting a bad value.
+        if (amount == null || amount <= 0) {
+            throw new IllegalArgumentException(
+                    "Payment amount must be a positive value, got: " + amount);
+        }
+
         Stripe.apiKey = stripeSecretKey;
 
+        // Uses the currency resolved once at startup (see
+        // validateConfiguredCurrency) rather than re-parsing the config
+        // string on every checkout — cheaper, and guarantees this method
+        // can never throw on a bad currency config, since that failure
+        // already happened at boot.
         SessionCreateParams params = SessionCreateParams.builder()
                 .addPaymentMethodType(SessionCreateParams.PaymentMethodType.CARD)
                 .setMode(SessionCreateParams.Mode.PAYMENT)
-                .setSuccessUrl("http://localhost:3000/payment-success/" + orderId)
-                .setCancelUrl("http://localhost:3000/payment-cancele/")
+                .setSuccessUrl(paymentSuccessUrlBase + orderId)
+                .setCancelUrl(paymentCancelUrl)
                 .addLineItem(SessionCreateParams.LineItem.builder()
                         .setQuantity(1L)
                         .setPriceData(SessionCreateParams.LineItem.PriceData.builder()
-                                .setCurrency("usd")
-                                .setUnitAmount(amount * 100)
+                                .setCurrency(resolvedCurrency.getStripeCode())
+                                .setUnitAmount(resolvedCurrency.toStripeUnitAmount(amount))
                                 .setProductData(SessionCreateParams.LineItem.PriceData.ProductData
                                         .builder().setName("Huru payment")
                                         .build())
@@ -199,54 +181,3 @@ public class PaymentServiceImpl implements PaymentService {
 
 }
 
-// @Override
-// public String createStripePaymentLink(User user, Long amount, Long orderId) {
-// try {
-// // Create a Product (or reuse a static one if you'd prefer)
-// ProductCreateParams productParams = ProductCreateParams.builder()
-// .setName("Order #" + orderId)
-// .build();
-// Product product = Product.create(productParams);
-
-// // Create a Price for the product
-// PriceCreateParams priceParams = PriceCreateParams.builder()
-// .setProduct(product.getId())
-// .setUnitAmount(amount * 100) // Stripe expects amount in cents
-// .setCurrency("usd")
-// .build();
-// Price price = Price.create(priceParams);
-
-// // Create the Payment Link with redirect callback
-// PaymentLinkCreateParams linkParams = PaymentLinkCreateParams.builder()
-// .addLineItem(
-// PaymentLinkCreateParams.LineItem.builder()
-// .setPrice(price.getId())
-// .setQuantity(1L)
-// .build()
-// )
-// .setAfterCompletion(
-// PaymentLinkCreateParams.AfterCompletion.builder()
-// .setType(PaymentLinkCreateParams.AfterCompletion.Type.REDIRECT)
-// .setRedirect(
-// PaymentLinkCreateParams.AfterCompletion.Redirect.builder()
-// .setUrl("http://localhost:3000/payment-success/" + orderId)
-// .build()
-// )
-// .build()
-// )
-// .putMetadata("orderId", orderId.toString())
-// .build();
-
-// String paymentLink = PaymentLink.create(linkParams);
-
-// // (Optional) Log or return payment link URL and ID
-// String paymentLinkUrl = paymentLink.getUrl();
-// String paymentLinkId = paymentLink.getId();
-
-// return paymentLink;
-
-// } catch (StripeException e) {
-// System.out.println(e.getMessage());
-// throw new RuntimeException("Failed to create Stripe payment link", e);
-// }
-// }

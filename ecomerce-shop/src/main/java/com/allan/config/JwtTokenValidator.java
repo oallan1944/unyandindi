@@ -19,10 +19,28 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 
-// import java.nio.file.DirectoryStream.Filter;
-
+/**
+ * Populates SecurityContext from a Bearer JWT if one is present and
+ * valid. Runs on every request (registered before BasicAuthenticationFilter
+ * in SecurityConfig), so it must never hard-fail a request itself —
+ * whether a request is actually allowed to proceed is
+ * authorizeHttpRequests' job, not this filter's. This filter's only
+ * job is: "if there's a valid token, say who the caller is."
+ *
+ * On a missing, malformed, invalid, or expired token, this filter
+ * simply leaves SecurityContext unauthenticated and continues the
+ * chain. That correctly lets permitAll() routes proceed anonymously,
+ * and correctly lets authenticated()-guarded routes get rejected by
+ * Spring Security's own entry point (see SecurityConfig's
+ * defaultAuthenticationEntryPointFor) rather than by this filter
+ * writing a response directly.
+ */
+@Slf4j
 public class JwtTokenValidator extends OncePerRequestFilter {
+
+    private final SecretKey key = Keys.hmacShaKeyFor(JWT_CONSTANT.SECRET_KEY.getBytes());
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -33,7 +51,6 @@ public class JwtTokenValidator extends OncePerRequestFilter {
             jwt = jwt.substring(7);
 
             try {
-                SecretKey key = Keys.hmacShaKeyFor(JWT_CONSTANT.SECRET_KEY.getBytes());
                 Claims claims = Jwts.parserBuilder()
                         .setSigningKey(key)
                         .build()
@@ -42,8 +59,6 @@ public class JwtTokenValidator extends OncePerRequestFilter {
                 String email = String.valueOf(claims.get("email"));
                 String authorities = String.valueOf(claims.get("authorities"));
 
-                 
-        
                 List<GrantedAuthority> auths = AuthorityUtils
                         .commaSeparatedStringToAuthorityList(authorities);
 
@@ -52,20 +67,22 @@ public class JwtTokenValidator extends OncePerRequestFilter {
                 SecurityContextHolder.getContext().setAuthentication(authentication);
 
             } catch (Exception e) {
-                
-            // Don't throw — just log and continue without authentication
-            // This allows permitAll() endpoints to still work
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.setContentType("application/json");
-            response.getWriter().write("{\"error\": \"Invalid or expired JWT token.\"}");
-          //  return;
+                // Invalid or expired token — do NOT write to the response
+                // and do NOT set an Authentication. Just proceed
+                // unauthenticated. authorizeHttpRequests decides what
+                // happens next: permitAll() routes work fine as
+                // anonymous requests; authenticated()-guarded routes
+                // get correctly rejected by Spring Security's own
+                // entry point further down the chain.
+                //
+                // Deliberately not logging the token or claims here —
+                // only that validation failed and why, at debug level
+                // (expired/malformed tokens are routine, not incidents).
+                log.debug("JWT validation failed, proceeding unauthenticated: {}", e.getMessage());
             }
         }
 
         filterChain.doFilter(request, response);
-        
-        
     }
-    
 
 }

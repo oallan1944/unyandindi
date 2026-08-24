@@ -10,6 +10,7 @@ import Paper from '@mui/material/Paper';
 import { useAppDispatch, useAppSelector } from '../../../State/store';
 import { fetchSellerOrders, updateOrderStatus } from '../../../State/seller/sellerOrderSlice';
 import { Button, Menu, MenuItem } from '@mui/material';
+import { getToken } from '../../../Util/tokenStorage';
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
     [`&.${tableCellClasses.head}`]: {
@@ -55,7 +56,7 @@ export default function OrderTable() {
     const { sellerOrder } = useAppSelector(store => store);
 
     React.useEffect(() => {
-        dispatch(fetchSellerOrders(localStorage.getItem("jwt") || ""))
+        dispatch(fetchSellerOrders(getToken() || ""))
     }, [])
 
     const [anchorEl, setAnchorEl] = React.useState<null | any>({});
@@ -68,11 +69,11 @@ export default function OrderTable() {
     }
     const handleUpdateOrderStatus = (orderId: number, orderStatus: any) => () => {
         dispatch(updateOrderStatus({
-            jwt: localStorage.getItem("jwt") || "",
+            jwt: getToken() || "",
             orderId, orderStatus
         }))
             .then(() => {
-                dispatch(fetchSellerOrders(localStorage.getItem("jwt") || ""))
+                dispatch(fetchSellerOrders(getToken() || ""))
 
             })
     }

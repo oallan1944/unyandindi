@@ -7,6 +7,7 @@ import PricingCard from './PricingCard'
 import { useNavigate } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '../../../State/store'
 import { fetchUserCart } from '../../../State/customer/cartSlice'
+import { getToken } from '../../../Util/tokenStorage'
 
 const Cart = () => {
     const [couponCode, setCouponCode] = useState("")
@@ -17,7 +18,7 @@ const Cart = () => {
     const dispatch = useAppDispatch()
     const { cart } = useAppSelector(store => store)
     useEffect(() => {
-        dispatch(fetchUserCart(localStorage.getItem("jwt") || ""))
+        dispatch(fetchUserCart(getToken() || ""))
     }, [])
 
     // console.log("cart....", cart)

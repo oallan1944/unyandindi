@@ -53,11 +53,14 @@ const Product = () => {
         let maxPrice: number | undefined
 
         if (priceParam) {
-            const [minStr, maxStr] = priceParam.split('.')
+            const [minStr, maxStr] = priceParam.split('-')
             const minNum = Number(minStr)
-            const maxNum = Number(maxStr)
             if (!isNaN(minNum)) minPrice = minNum
-            if (!isNaN(maxNum)) maxPrice = maxNum
+            // maxStr is '' for open-ended buckets like "$100 and above" — leave maxPrice undefined
+            if (maxStr) {
+                const maxNum = Number(maxStr)
+                if (!isNaN(maxNum)) maxPrice = maxNum
+            }
         }
 
         const color = searchParams.get('color') || ''

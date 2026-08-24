@@ -52,8 +52,14 @@ public class FlashSaleMapper {
                 : originalPrice;
 
         dto.setOriginalPrice(originalPrice);
-        dto.setEffectivePrice(Math.round(effectivePrice * 100.0) / 100.0); // 2dp rounding
-        dto.setAmountSaved(Math.round((originalPrice - effectivePrice) * 100.0) / 100.0);
+        // Whole shillings, not 2dp: the (x * 100.0) / 100.0 rounding was
+        // meaningful for USD cents but produces meaningless fractional-
+        // shilling values now that pricing is in UGX, which has no minor
+        // currency unit in everyday use. Stays a double to match whatever
+        // ProductInFlashSaleDTO's setters already expect — only the
+        // rounding granularity changed, not the type.
+        dto.setEffectivePrice((double) Math.round(effectivePrice));
+        dto.setAmountSaved((double) Math.round(originalPrice - effectivePrice));
 
         return dto;
     }

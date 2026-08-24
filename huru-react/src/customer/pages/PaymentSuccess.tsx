@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useAppDispatch } from '../../State/store'
 import { paymentSuccess } from '../../State/customer/orderSlice'
+import { getToken } from '../../Util/tokenStorage'
 
 const PaymentSuccess = () => {
     const navigate = useNavigate()
@@ -18,7 +19,7 @@ const PaymentSuccess = () => {
         const paymentId = getQueryParam("stripe_payment_id")
         const paymentLinkId = getQueryParam("stripe_payment_link_id")
         dispatch(paymentSuccess({
-            jwt: localStorage.getItem("jwt") || "",
+            jwt: getToken() || "",
             paymentId: paymentId || "",
             paymentLinkId: paymentLinkId || ""
         }))
@@ -28,7 +29,7 @@ const PaymentSuccess = () => {
             <div className='bg-primary-color text-white p-8 w-[90%] lg:w-[25%]
             border rounded-md h-[40vh] flex flex-col gap-7 items-center justify-center'>
                 <h1 className='text-3xl font-semibold'> Congratulations!</h1>
-                <h1 className='text-2x1 font-semibold'>your order get success</h1>
+                <h1 className='text-2x1 font-semibold'>your order is on your way</h1>
                 <div>
                     <Button
                         color='secondary'

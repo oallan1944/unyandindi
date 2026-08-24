@@ -9,6 +9,7 @@ import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
 import { useAppDispatch, useAppSelector } from '../../../State/store';
 import { fetchTransactionBySeller } from '../../../State/seller/transactionSlice';
+import { getToken } from '../../../Util/tokenStorage';
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
     [`&.${tableCellClasses.head}`]: {
@@ -52,7 +53,7 @@ export default function TransactionTable() {
     const dispatch = useAppDispatch()
     const { transactions } = useAppSelector(store => store)
     React.useEffect(() => {
-        dispatch(fetchTransactionBySeller(localStorage.getItem("jwt") || ""))
+        dispatch(fetchTransactionBySeller(getToken() || ""))
     }, [])
     return (
         <TableContainer component={Paper}>

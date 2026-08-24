@@ -2,12 +2,13 @@
 import { toast } from 'react-toastify';
 import { addItemToCart, fetchUserCart } from '../../../State/customer/cartSlice';
 import { useAppDispatch } from '../../../State/store';
+import { getToken } from '../../../Util/tokenStorage';
 
 const useAddToCart = () => {
   const dispatch = useAppDispatch();
 
   const handleAddToCart = (productId: number, size: string, quantity: number = 1) => {
-    const jwt = localStorage.getItem("jwt");
+    const jwt = getToken();
 
     if (!jwt) {
       toast.error("You must be logged in to add items to cart");
@@ -37,7 +38,5 @@ const useAddToCart = () => {
 
   return handleAddToCart;
 };
-
-
 
 export default useAddToCart;

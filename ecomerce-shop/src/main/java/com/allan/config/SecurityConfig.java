@@ -111,6 +111,11 @@ public class SecurityConfig {
                         "/api/payments/**"
                 ).authenticated()
 
+                .requestMatchers(
+                        "/users/profile",
+                        "/users/complete-profile"
+                ).authenticated()
+
                 .anyRequest().permitAll()
             )
 
@@ -119,7 +124,7 @@ public class SecurityConfig {
 
             .oauth2Login(oauth2 -> oauth2
                     .authorizationEndpoint(endpoint -> endpoint
-                            .baseUri("/api/auth/google")
+                            .baseUri("/api/auth")
                     )
                     .redirectionEndpoint(endpoint -> endpoint
                             .baseUri("/login/oauth2/code/*")

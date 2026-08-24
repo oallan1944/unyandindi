@@ -2,6 +2,7 @@ package com.allan.controller;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -25,9 +26,23 @@ import com.allan.service.UserService;
 
 import lombok.RequiredArgsConstructor;
 
+/**
+ * Customer cart CRUD.
+ *
+ * <p><strong>{@code updateCartItemHandler} accepts only {@code quantity}
+ * from the client-supplied {@code CartItem} body</strong> — every other
+ * field on that object (price, product reference, etc.) is discarded
+ * before reaching {@code CartItemService}. The endpoint's request shape
+ * is a full entity for backward compatibility with the existing frontend
+ * payload, but nothing except quantity is trusted from it. If this
+ * controller grows, prefer a dedicated request DTO with only the fields
+ * you actually want a client to set, rather than widening what's read
+ * off this entity.
+ */
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/cart")
+@PreAuthorize("isAuthenticated()")
 public class CartController {
 
     private final CartService cartService;
@@ -81,14 +96,25 @@ public class CartController {
             @RequestBody CartItem cartItem,
             @RequestHeader("Authorization") String jwt) throws Exception {
         User user = userService.findUserByJwtToken(jwt);
-        CartItem updatedCartItem = null;
 
-        if (cartItem.getQuantity() > 0) {
-            updatedCartItem = cartItemService.updateCartItem(
-                    user.getId(),
-                    cartItemId,
-                    cartItem);
+        if (cartItem.getQuantity() <= 0) {
+            // Previously fell through to updatedCartItem == null with a 202
+            // response, which looks like success to the frontend even though
+            // nothing happened. A quantity of 0 or less is a validation
+            // failure, not an accepted no-op.
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
+
+        // Only quantity is trusted from the client body — see class Javadoc.
+        // Everything else on the incoming CartItem (price, product, etc.)
+        // is intentionally dropped here rather than forwarded to the service.
+        CartItem quantityUpdate = new CartItem();
+        quantityUpdate.setQuantity(cartItem.getQuantity());
+
+        CartItem updatedCartItem = cartItemService.updateCartItem(
+                user.getId(),
+                cartItemId,
+                quantityUpdate);
 
         return new ResponseEntity<>(updatedCartItem, HttpStatus.ACCEPTED);
     }

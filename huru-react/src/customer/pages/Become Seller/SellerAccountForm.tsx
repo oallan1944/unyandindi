@@ -5,7 +5,8 @@ import { useFormik } from 'formik'
 import BecomeSellerFormStep2 from './BecomeSellerFormStep2'
 import BecomeSellerFormStep3 from './BecomeSellerFormStep3'
 import BecomeSellerFormStep4 from './BecomeSellerFormStep4'
-import { createSeller, useAppDispatch } from '../../../State/seller/sellerSlice'
+import { createSeller } from '../../../State/seller/sellerSlice'
+import { useAppDispatch } from '../../../State/store'
 import { SellerProfileFormValues } from '../../../types/sellerProfileFormValuesType'
 
 const steps = [

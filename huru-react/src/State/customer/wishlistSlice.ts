@@ -1,6 +1,7 @@
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { Wishlist, WishlistState } from "../../types/wishlistType";
 import { api } from "../../config/Api";
+import { getToken } from "../../Util/tokenStorage";
 
 const initialState: WishlistState = {
     wishlist: null,
@@ -14,7 +15,7 @@ export const getWishlistByUserId = createAsyncThunk(
         try {
             const response = await api.get(`/api/wishlist`, {
                 headers: {
-                    Authorization: `Bearer ${localStorage.getItem("jwt")}`
+                    Authorization: `Bearer ${getToken()}`
                 },
             });
             console.log("wishlist fetch", response.data)
@@ -40,7 +41,7 @@ export const addProductToWishlist = createAsyncThunk(
                 {},
                 {
                     headers: {
-                        Authorization: `Bearer ${localStorage.getItem("jwt")}`
+                        Authorization: `Bearer ${getToken()}`
                     },
                 }
             );

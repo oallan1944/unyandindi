@@ -18,6 +18,7 @@ import { createProduct } from '../../../State/seller/sellerProductSlice'
 import { Autocomplete, Chip } from '@mui/material';
 import { addProductSchema } from '../../../component/validation/addProductSchema'
 import { AddProductForm } from '../../../types/addProductFormType'
+import { getToken } from '../../../Util/tokenStorage'
 
 
 
@@ -95,7 +96,7 @@ const AddProduct = () => {
                 };
                 await dispatch(createProduct({
                     request: requestPayload,
-                    jwt: localStorage.getItem("jwt")
+                    jwt: getToken()
                 }));
                 setNotification({
                     open: true,

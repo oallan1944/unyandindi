@@ -12,6 +12,7 @@ import { fetchSellerProducts } from '../../../State/seller/sellerProductSlice';
 import { Product } from '../../../types/productType';
 import { Button, IconButton } from '@mui/material';
 import { Edit } from '@mui/icons-material';
+import { getToken } from '../../../Util/tokenStorage';
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
     [`&.${tableCellClasses.head}`]: {
@@ -55,7 +56,7 @@ export default function ProductTable() {
     const dispatch = useAppDispatch();
     const { sellerProduct } = useAppSelector(store => store);
     React.useEffect(() => {
-        dispatch(fetchSellerProducts(localStorage.getItem('jwt')))
+        dispatch(fetchSellerProducts(getToken()))
     }, [])
     return (
         <TableContainer component={Paper}>

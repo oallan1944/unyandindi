@@ -2,12 +2,13 @@ import { useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '../../../State/store'
 import { fetchUserOrderHistory } from '../../../State/customer/orderSlice'
 import OrdaItem from './OrdaItem'
+import { getToken } from '../../../Util/tokenStorage'
 
 const Orders = () => {
     const dispatch = useAppDispatch()
     const { order } = useAppSelector(store => store)
     useEffect(() => {
-        dispatch(fetchUserOrderHistory(localStorage.getItem("jwt") || ""))
+        dispatch(fetchUserOrderHistory(getToken() || ""))
     }, [])
     return (
         <div className='text-sm min-h-screen'>

@@ -49,11 +49,15 @@ public class Product {
     @JsonView(DetailView.class) // ✅ description only on detail page
     private String description;
 
+    // Widened from int to long: at UGX magnitudes (~3,700x USD), per-unit
+    // prices and quantity multiplication downstream (see CartServiceImpl)
+    // can approach Integer's ~2.1 billion ceiling for high-value items or
+    // bulk/wholesale quantities.
     @JsonView(ListView.class)
-    private int mrpPrice;
+    private long mrpPrice;
 
     @JsonView(ListView.class)
-    private int sellingPrice;
+    private long sellingPrice;
 
     @JsonView(ListView.class)
     private int discountPercent;
@@ -101,6 +105,3 @@ public class Product {
     @BatchSize(size = 30)
     private List<Review> reviews = new ArrayList<>();
 }
-
-
-

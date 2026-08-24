@@ -3,6 +3,8 @@ import { Button, Divider, IconButton } from '@mui/material'
 import { CartItem } from '../../../types/cartType'
 import { useAppDispatch } from '../../../State/store'
 import { deleteCartItem, fetchUserCart, updateCartItem } from '../../../State/customer/cartSlice'
+import { formatUGX } from '../../../Util/currency'
+import { getToken } from '../../../Util/tokenStorage'
 
 
 const CatItem = ({ item }: { item: CartItem }) => {
@@ -11,18 +13,18 @@ const CatItem = ({ item }: { item: CartItem }) => {
     const handleUpdateQuantity = (value: number) => () => {
         //Update cart Item Quantinty
         dispatch(updateCartItem({
-            jwt: localStorage.getItem("jwt"),
+            jwt: getToken(),
             cartItemId: item.id,
             cartItem: { quantity: item.quantity + value }
         }))
     }
     const handleRemoveItem = () => {
         dispatch(deleteCartItem({
-            jwt: localStorage.getItem("jwt")!,
+            jwt: getToken()!,
             cartItemId: item.id
         }))
             .unwrap()
-            .then(() => dispatch(fetchUserCart(localStorage.getItem("jwt")!)))
+            .then(() => dispatch(fetchUserCart(getToken()!)))
             .catch((err) => console.error(err));
     }
 
@@ -64,7 +66,7 @@ const CatItem = ({ item }: { item: CartItem }) => {
                     </div>
                 </div>
                 <div className='pr-5'>
-                    <p className='text-gray-700 font-medium'>${item.sellingPrice}</p>
+                    <p className='text-gray-700 font-medium'>{formatUGX(item.sellingPrice)}</p>
                 </div>
                 <div className='absolute top-1 right-1'>
                     <IconButton color='primary' onClick={handleRemoveItem}>

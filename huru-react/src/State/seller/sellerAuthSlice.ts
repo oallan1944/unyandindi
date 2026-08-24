@@ -1,6 +1,7 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { api } from "../../config/Api";
 import { SellerAuthState, SellerLoginRequest, SellerLoginResponse } from "../../types/sellerType";
+import { setToken } from "../../Util/tokenStorage";
 
 
 
@@ -20,7 +21,7 @@ export const sellerLogin = createAsyncThunk<
             });
 
             const jwt = response.data.jwt;
-            localStorage.setItem("jwt", jwt);
+            setToken(jwt);
 
             return response.data;
         } catch (error: any) {

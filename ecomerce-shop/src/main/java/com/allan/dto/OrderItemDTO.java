@@ -7,8 +7,9 @@ import lombok.Data;
 public class OrderItemDTO {
     private Long id;
     private int quantity;
-    private int mrpPrice;
-    private int sellingPrice;
+    // Widened from int to long, matching OrderItem.java.
+    private long mrpPrice;
+    private long sellingPrice;
     private String size;
 
     // ✅ only product summary — not full product with reviews/seller/category

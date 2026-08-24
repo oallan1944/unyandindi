@@ -37,9 +37,12 @@ public class OrderItem {
 
     private int quantity;
 
-    private Integer mrpPrice;
+    // Widened from Integer to Long, matching CartItem — these values flow
+    // directly from CartItem.getMrpPrice()/getSellingPrice() in
+    // OrderServiceImpl.createOrder, which are already Long.
+    private Long mrpPrice;
 
-    private Integer sellingPrice;
+    private Long sellingPrice;
 
     private Long userId;
 

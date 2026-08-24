@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { api } from "../../config/Api";
+import { getAdminToken, setAdminToken, clearAdminToken } from "../../Util/adminTokenStorage";
 
 interface AdminAuthState {
     jwt: string | null;
@@ -11,9 +12,13 @@ interface AdminAuthState {
 }
 
 const initialState: AdminAuthState = {
-    jwt: localStorage.getItem("admin_jwt"),
+    jwt: getAdminToken(),
+    // admin_role isn't a token — left on localStorage deliberately, since
+    // it's non-sensitive display data, not a credential. isLoggedIn below
+    // is gated on the JWT, not on this, so a stale role value with no
+    // token can't grant access to anything.
     role: localStorage.getItem("admin_role"),
-    isLoggedIn: !!localStorage.getItem("admin_jwt"),
+    isLoggedIn: !!getAdminToken(),
     loading: false,
     error: null,
     otpSent: false,
@@ -36,7 +41,7 @@ export const adminSignin = createAsyncThunk(
     async ({ email, otp }: { email: string; otp: string }, { rejectWithValue }) => {
         try {
             const response = await api.post("/api/admin/login", { email, otp });
-            localStorage.setItem("admin_jwt", response.data.jwt);
+            setAdminToken(response.data.jwt);
             localStorage.setItem("admin_role", response.data.role);
             return response.data;
         } catch (error: any) {
@@ -46,7 +51,7 @@ export const adminSignin = createAsyncThunk(
 );
 
 export const adminLogout = createAsyncThunk("adminAuth/logout", async (navigate: any) => {
-    localStorage.removeItem("admin_jwt");
+    clearAdminToken();
     localStorage.removeItem("admin_role");
     navigate("/admin/login");
 });

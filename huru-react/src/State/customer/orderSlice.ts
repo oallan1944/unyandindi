@@ -3,6 +3,7 @@ import { Order, OrderItem, OrderState } from "../../types/orderType";
 import { api } from "../../config/Api";
 import { Address } from "../../types/userTypes";
 import axios from "axios";
+import { getToken } from "../../Util/tokenStorage";
 
 const initialState: OrderState = {
     orders: [],
@@ -124,7 +125,7 @@ export const cancelOrder = createAsyncThunk<Order, any>(
         try {
             const response = await api.put(`${API_URL}/${orderId}/cancel`, {}, {
                 headers: {
-                    Authorization: `Bearer ${localStorage.getItem("jwt")}`,
+                    Authorization: `Bearer ${getToken()}`,
                 },
             });
             console.log("cancel order", response.data)

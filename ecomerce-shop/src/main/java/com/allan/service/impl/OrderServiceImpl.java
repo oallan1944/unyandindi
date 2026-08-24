@@ -68,8 +68,12 @@ public class OrderServiceImpl implements OrderService {
         Long sellerId = entry.getKey();
         List<CartItem> items = entry.getValue();
 
-        int totalOrderPrice = items.stream()
-                .mapToInt(CartItem::getSellingPrice)
+        // long, not int: CartItem.getSellingPrice() now returns Long (widened
+        // to avoid overflow at UGX magnitudes — see CartItem.java). Summing
+        // several already-large line totals across a seller's items pushes
+        // this further toward int's ceiling, not away from it.
+        long totalOrderPrice = items.stream()
+                .mapToLong(CartItem::getSellingPrice)
                 .sum();
 
         int totalItem = items.stream()
@@ -198,10 +202,3 @@ public class OrderServiceImpl implements OrderService {
 
 
 }
-
-
-
-
-
-
-
